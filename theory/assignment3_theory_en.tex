@@ -1,0 +1,341 @@
+\documentclass[12pt]{article}
+\usepackage[canadien]{babel} 
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{enumerate}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{subfigure}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{url}
+\usepackage{todonotes}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{comment}
+
+\setlength{\parindent}{0cm}
+\addtolength{\oddsidemargin}{-2cm}
+\addtolength{\evensidemargin}{-2cm}
+\setlength{\textwidth}{17.78cm}
+\addtolength{\topmargin}{-2.25cm}
+\setlength{\textheight}{23.24cm}
+\addtolength{\parskip}{5mm}
+\pagestyle{fancy}
+
+%************
+%* COMMANDS *
+%************
+
+\input{math_commands.tex}
+
+\newif\ifexercise
+\exercisetrue
+%\exercisefalse
+
+\newif\ifsolution
+% \solutionfalse
+\solutiontrue
+
+\usepackage{booktabs}
+% \usepackage[chapter]{algorithm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+% Include chapter number in algorithm number
+\renewcommand{\thealgorithm}{\arabic{chapter}.\arabic{algorithm}}
+
+\usepackage{amsthm}
+\theoremstyle{definition}
+\newtheorem{exercise}{Question}%[chapter]
+\newtheorem{answer}{Answer} % asterisk to remove ordering
+
+
+\newcommand{\Exercise}[1]{
+\ifexercise#1\fi
+}
+
+\newcommand{\Answer}[1]{
+\ifsolution
+\begin{answer}#1\end{answer}
+\fi
+}
+
+
+
+\usepackage{enumitem}
+\newcommand{\staritem}{
+\addtocounter{enumi}{1}
+\item[$\phantom{x}^{*}$\theenumi]}
+\setlist[enumerate,1]{leftmargin=*, label=\arabic*.}
+
+
+\begin{document}
+
+\fancyhead{}
+\fancyfoot{}
+
+\fancyhead[L]{
+  \begin{tabular}[b]{l}
+    IFT6135-A2023  \\
+    Prof: Aishwarya Agrawal \\
+  \end{tabular}
+}
+\fancyhead[R]{
+  \begin{tabular}[b]{r}
+    Assignment 3, Theoretical Part \\
+    Generative models\\
+  \end{tabular}
+}
+\fancyfoot[C]{- Do not distribute -}
+
+\vspace{1cm}
+
+\shorthandoff{:}
+{Due Date: Dec 8th (23:00 ET), 2023}\\
+
+
+\vspace{-0.5cm}
+\underline{Instructions}%
+\renewcommand{\labelitemi}{\textbullet}
+
+\begin{itemize}
+\item \emph{For all questions, show your work!}
+\item \emph{Use LaTeX and the template we provide when writing your answers.
+You may reuse most of the notation shorthands, equations and/or tables.
+See the assignment policy on the course website for more details.}
+\item \emph{The use of AI tools like Chat-GPT to find answers or parts of answers for any question in this assignment is not allowed. However, you can use these tools to improve the quality of your writing, like fixing grammar or making it more understandable. If you do use these tools, you must clearly explain how you used them and which questions or parts of questions you applied them to. Failing to do so or using these tools to find answers or parts of answers may result in your work being completely rejected, which means you'll receive a score of 0 for the entire theory or practical section.}
+\item \emph{Submit your answers electronically via Gradescope.}
+\item \emph{TAs for this assignment are \textbf{Thomas Jiralerspong, Sahar Dastani, and Shuo Zhang.}}
+\end{itemize}
+
+
+\begin{exercise}[5-5-5-5] (\textbf{Autoregressive Models})
+\newcommand\pixelcnnnewcoor[3]%
+   {\expandafter\def\csname pixelcnncy:#1\endcsname{#2}
+    \expandafter\def\csname pixelcnncx:#1\endcsname{#3}%
+    }
+\newcommand\pixelcnncx[1]{\expandafter\csname pixelcnncx:#1\endcsname}
+\newcommand\pixelcnncy[1]{\expandafter\csname pixelcnncy:#1\endcsname}
+
+
+\newcommand{\visible}[1]{
+\node[fill=black!20] at (\pixelcnncx{#1},\pixelcnncy{#1}) {};
+}
+\pixelcnnnewcoor{11}{+1.25}{-0.75}
+\pixelcnnnewcoor{12}{+1.25}{-0.25}
+\pixelcnnnewcoor{13}{+1.25}{+0.25}
+\pixelcnnnewcoor{14}{+1.25}{+0.75}
+\pixelcnnnewcoor{15}{+1.25}{+1.25}
+\pixelcnnnewcoor{21}{+0.75}{-0.75}
+\pixelcnnnewcoor{22}{+0.75}{-0.25}
+\pixelcnnnewcoor{23}{+0.75}{+0.25}
+\pixelcnnnewcoor{24}{+0.75}{+0.75}
+\pixelcnnnewcoor{25}{+0.75}{+1.25}
+\pixelcnnnewcoor{31}{+0.25}{-0.75}
+\pixelcnnnewcoor{32}{+0.25}{-0.25}
+\pixelcnnnewcoor{33}{+0.25}{+0.25}
+\pixelcnnnewcoor{34}{+0.25}{+0.75}
+\pixelcnnnewcoor{35}{+0.25}{+1.25}
+\pixelcnnnewcoor{41}{-0.25}{-0.75}
+\pixelcnnnewcoor{42}{-0.25}{-0.25}
+\pixelcnnnewcoor{43}{-0.25}{+0.25}
+\pixelcnnnewcoor{44}{-0.25}{+0.75}
+\pixelcnnnewcoor{45}{-0.25}{+1.25}
+\pixelcnnnewcoor{51}{-0.75}{-0.75}
+\pixelcnnnewcoor{52}{-0.75}{-0.25}
+\pixelcnnnewcoor{53}{-0.75}{+0.25}
+\pixelcnnnewcoor{54}{-0.75}{+0.75}
+\pixelcnnnewcoor{55}{-0.75}{+1.25}
+\newcommand{\drawgrid}{
+\draw[step=0.5cm,color=gray] (-1.00,-1.00) grid (1.50,1.50);
+\foreach \y [count=\yi] in {+1.25,+0.75,+0.25,-0.25,-0.75}
+\foreach \x [count=\xi] in {-0.75,-0.25,0.25,0.75,1.25}
+    \node at (\x,\y)
+    {{\small \yi\xi}};
+}
+\Exercise{
+\label{ex:pixcnn_masks}
+One way to enforce autoregressive conditioning is via masking the weight parameters. 
+\footnote{
+An example of this is the use of masking in the Transformer architecture.
+}
+Consider a two-hidden-layer convolutional neural network without kernel flipping, with kernel size $3\times3$ and padding size $1$ on each border (so that an input feature map of size $5\times5$ is convolved into a $5\times5$ output). 
+Define mask of type A and mask of type B as 
+\begin{align*}
+(\mM^A)_{::ij}:=\begin{cases}
+1 & \text{if $i < 2$}\\
+1 & \text{if $i = 2$ and $j<2$}\\
+0 & \text{elsewhere}
+\end{cases}
+\qquad
+(\mM^B)_{::ij}:=\begin{cases}
+1 & \text{if $i < 2$}\\
+1 & \text{if $i = 2$ and $j\leq2$}\\
+0 & \text{elsewhere}
+\end{cases}
+\end{align*}
+where the index starts from $1$. 
+Masking is achieved by multiplying the kernel with the binary mask (elementwise). 
+Specify the receptive field of the output pixel that corresponds to the third row and the third column (index $33$ of Figure~\ref{fig:pixcnn5} (Left)) in each of the following 4 cases:
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[every node/.style={minimum size=.5cm-\pgflinewidth, outer sep=0pt}]
+\drawgrid
+\end{tikzpicture}%
+% \hfill
+\hspace{10mm}
+\begin{tikzpicture}[every node/.style={minimum size=.5cm-\pgflinewidth, outer sep=0pt}]
+\visible{11}\visible{12}\visible{21}
+\drawgrid
+\end{tikzpicture}
+\caption{(Left) $5\times 5$ convolutional feature map. (Right) Template answer.}
+\label{fig:pixcnn5}
+\end{figure}
+\begin{enumerate}
+\item If we use $\mM^A$ for the first layer and $\mM^A$ for the second layer.
+\item If we use $\mM^A$ for the first layer and $\mM^B$ for the second layer.
+\item If we use $\mM^B$ for the first layer and $\mM^A$ for the second layer.
+\item If we use $\mM^B$ for the first layer and $\mM^B$ for the second layer.
+\end{enumerate}
+Your answer should look like Figure~\ref{fig:pixcnn5} (Right). 
+}
+\end{exercise}
+
+\begin{exercise}[5-5] (\textbf{Normalizing Flows})
+In this question, we study some properties of normalizing flows. Let $X \sim P_X$ and $U \sim P_U$ be, respectively, the distribution of the data and a base distribution (e.g. an isotropic gaussian). We define a normalizing flow as $F: \mathcal{U} \rightarrow \mathcal{X}$ parametrized by $\vtheta$. Starting with $P_U$ and then applying $F$ will induce a new distribution $P_{F(U)}$ (used to match $P_X$). Since normalizing flows are invertible, we can also consider the distribution $P_{F^{-1}(X)}$.
+%(after minimizing the forward KL divergence $D_{KL}[p_X(\vx) || q_X(\vx;\theta)]$).
+
+However, some flows, like planar flows, are not easily invertible in practice. If we use $P_U$ as the base distribution, we can only sample from the flow but not evaluate the likelihood. Alternatively, if we use $P_X$ as the base distribution, we can evaluate the likelihood, but we will not be able to sample.
+
+\begin{enumerate}[label=\arabic{exercise}.\arabic*]
+    \item Show that $D_{KL}[P_X || P_{F(U)}] = D_{KL}[P_{F^{-1}(X)} || P_U]$. In other words, the forward KL divergence between the data distribution and its approximation can be expressed as the reverse KL divergence between the base distribution and its approximation. 
+    \item Suppose two scenarios: 1) you don't have samples from $p_X(\vx)$, but you can evaluate $p_X(\vx)$, 2) you have samples from $p_X(\vx)$, but you cannot evaluate $p_X(\vx)$. For each scenario, specify if you would use the forward KL divergence $D_{KL}[P_X || P_{F(U)}]$ or the reverse KL divergence $D_{KL}[P_{F(U)} || P_X]$ as the objective to optimize. Justify your answer.
+\end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}[3-8-3-14] (\textbf{Variational Autoencoders})
+\begin{enumerate}
+    \item Let $p_x^*(.)$ be the true data distribution and $p_x(.;\theta)$ be the model distribution parametrized over $\theta$, a natural criterion to define if $p_x(.;\theta)$ is accurately portraying $p_x^*(.)$ is the \textit{Maximum Likelihood Estimation} (MLE). Sometimes, knowledge about the data can lead us to adopt a model with hidden intermediate variable $z$ to approximate the data distribution, where only the joint distribution $p_{x, z}(., ., \theta)$ are explicitly defined. For such models, we need to calculate the marginal likelihood $p_x(.) = \int_z p_{x, z}(., z, \theta) dz$, however, this proves to be difficult. Why?
+    \begin{enumerate}
+        \item We do not know about $p_(x|z)$ and thus cannot calculate the integral.
+        \item Integration over the hidden variable $z$ can prove to be intractable due to the complexity of $p_(x|z)$ and the curse of dimensionality. 
+        \item We don't know and cannot assume what $z$ looks like (i.e. what kind of distribution) and thus cannot calculate the integral.
+        \item The integral over the hidden variable $z$ is intractable because it does not follow a standard distribution like Gaussian or Bernoulli.
+    \end{enumerate}
+
+    \item To avoid the above problem, we can try to avoid $p_x(.)$ and instead aim to establish a lower bound function of it. This involves rewriting the log of the marginal likelihood $\log p_x(.) = \log \int_z p_{x, z}(., z, \theta) dz$ as a combination of a KL divergence and an \textit{Evidence Lower Bound} (ELBO). This process is facilitated by the introduction of an approximate posterior $q(z|x)$ which approximates the unknown true posterior $p(z|x)$. The choice of $q$ is arbitrary, but we often choose it from simpler classes of distributions such as the Gaussian for practical reasons. Your task is to derive the ELBO function in two ways:
+    \begin{enumerate}
+        \item By decomposing the marginal likelihood as the combination of a KL-divergence between variational and true posteriors over $z$ ($D_{KL}(q(z|x) || p(z|x))$) and the ELBO. 
+        \item By using the Jensen Inequality. 
+    \end{enumerate}
+
+    \item What is the significance of the above result? Select all that apply.
+    \begin{enumerate}
+        \item $p_x(.)$ has a lower bound which is the ELBO. 
+        \item Maximizing the ELBO is equivalent to minimizing the distributional difference between the approximation $q(z|x)$ and the true (but intractable) $p(z|x)$.
+        \item The ELBO offers a theoretical bound but is not useful in practice for training models with latent variables.
+        \item The choice of $q$ affects the tightness of the lower bound.
+    \end{enumerate}
+
+    \item  This question is about importance weighted autoencoder. When training a variational autoencoder, the standard training objective is to maximize the evidence lower bound (ELBO). Here we consider another lower bound, called the Importance Weighted Lower Bound (IWLB), a tighter bound than ELBO, defined as 	
+    \begin{align*}
+    \mathcal{L}_k = \mathbf{E}_{z_{1:k}\sim q(\bm{z} \mid \bm{x})} \left[\log \frac{1}{k}\sum_{j=1}^{k}\frac{p(\bm{x},z_j)}{q(z_j \mid \bm{x})}\right]
+    \end{align*}		
+    		for an observed variable $\bm{x}$ and a latent variable $\bm{z}$, $k$ being the number of importance samples. The model we are considering has joint that factorizes as $p(\bm{z},\bm{x}) = p(\bm{x} \mid \bm{z})p(\bm{z})$, $\bm{x}$ and $\bm{z}$ being the observed and latent variables, respectively. In the following questions, one needs to make use of the Jensen's inequality: 
+    		\begin{align*}
+    		f(\mathbf{E}[X]) \leq \mathbf{E}[f(X)]
+    		\end{align*}
+    		for a convex function $f$. 
+    		
+    \begin{enumerate}
+    \item Show that IWLB is a lower bound on the log likelihood $\log p(\bm{x})$. 
+    \item Given a special case where $k=2$, prove that $\mathcal{L}_2$ is a tighter bound than the ELBO (with $k=1$). 
+    \end{enumerate}		
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[2-2-2-3-3-10] (\textbf{Generative Adversarial Networks})
+\begin{enumerate}
+    \item Consider a Generative Adversarial Network (GAN) which successfully produces images of apples. Which of the following propositions is false?
+    \begin{enumerate}
+        \item The generator aims to learn the distribution of apple images.
+        \item The discriminator can be used to classify images as apple vs. non-apple.
+        \item After training the GAN, the discriminator loss eventually reaches a constant value.
+        \item The generator can produce unseen images of apples.
+    \end{enumerate}
+
+    \item Which of the following cost functions is the non-saturating cost function for the generator in GANs (G is the generator and D is the discriminator)? Note that the cost function will be minimized w.r.t the generator parameters during training.
+    \begin{enumerate}
+        \item $J^{(G)} = \frac{1}{m} \sum_{i=1}^{m} \log (1 - D(G(z^{(i)})))$
+        \item $J^{(G)} = -\frac{1}{m} \sum_{i=1}^{m} \log (D(G(z^{(i)})))$
+        \item $J^{(G)} = \frac{1}{m} \sum_{i=1}^{m} \log (1 - G(D(z^{(i)})))$
+        \item $J^{(G)} = -\frac{1}{m} \sum_{i=1}^{m} \log (G(D(z^{(i)})))$
+    \end{enumerate}
+
+    \item After training a neural network, you observe a large gap between the training accuracy (100\%) and the test accuracy (42\%). Which of the following methods is commonly used to reduce this gap?
+    \begin{enumerate}
+        \item Generative Adversarial Networks
+        \item Dropout
+        \item Sigmoid activation
+        \item RMSprop optim
+    \end{enumerate}
+
+    \item Given the two options of (A) saturating cost and (B) non-saturating cost, which cost function would you choose to train a GAN? Explain your reasoning. (1-2 sentences)
+    \item You are training a standard GAN, and at the end of the first epoch you take note of the values of the generator and discriminator losses. At the end of epoch 100, the values of the loss functions are approximately the same as they were at the end of the first epoch. Why are the quality of generated images at epoch 1 and epoch 100 not necessarily similar? (1-2 sentences)
+
+   \item Let $p_0$ and $p_1$ be two probability distributions with densities $f_0$ and $f_1$ (respectively). We want to explore what we can do with a trained GAN discriminator. A trained discriminator is thought to be one which is "close" to the optimal one:
+    $$D^*:=\argmax_D \E_{\vx\sim p_1}[\log D(\vx)] + \E_{\vx\sim p_0}[\log (1-D(\vx))].$$
+    \begin{enumerate}
+        \item For the first part of this problem, derive an expression we can use to estimate the Jensen-Shannon divergence (JSD) between $p_0$ and $p_1$ using a trained discriminator. We remind that the definition of JSD is $\text{JSD}(p_0, p_1) = \frac{1}{2} \big(KL(p_0\|\mu) + KL(p_1\|\mu)\big)$, where $\mu = \frac{1}{2}(p_0 + p_1)$.
+        \item For the second part, we want to demonstrate that a optimal GAN Discriminator (i.e. one which is able to distinguish between examples from $p_0$ and $p_1$ with minimal NLL loss) can be used to express the probability density of a datapoint $\vx$ under $f_1$, $f_1(\vx)$ in terms of $f_0(\vx)$\footnote{You might need to use the ``functional derivative'' to solve this problem. See ``19.4.2 Calculus of Variations'' of the Deep Learning book or ``Appendix D Calculus of Variations'' of Bishop's Pattern Recognition and Machine Learning for more information.}.
+        Assume $f_0$ and $f_1$ have the same support. Show that $f_1(\vx)$ can be estimated by ${f_0(\vx){D(\vx)}/(1-D(\vx))}$ by establishing the identity $f_1(\vx)={f_0(\vx){D^*(\vx)}/(1-D^*(\vx))}$.
+    \end{enumerate}
+    \emph{Hint: Find the closed form solution for $D^*$.}
+\end{enumerate}\end{exercise}
+
+\begin{exercise}[5-5-5-5] (\textbf{Self-Supervised Learning: Paper Review})
+
+
+In this question, you are going to write a \textbf{one page review} of the \href{https://arxiv.org/pdf/2002.05709.pdf}{A Simple Framework for Contrastive Learning of Visual Representations paper}. 
+
+Your review should have the following four sections: Summary, Strengths, Weaknesses, and Reflections. For each of these sections, below we provide a set of questions you should ask about the paper as you read it. Then, discuss your thoughts about these questions in your review.
+\begin{enumerate}[label=(\theexercise.\arabic*)]
+    \item \textbf{Summary:}
+    \begin{enumerate}
+        \item What is this paper about?
+        \item What is the main contribution? 
+        \item Describe the main approach and results. Just facts, no opinions yet. 
+    \end{enumerate}
+    \item \textbf{Strengths:}
+    \begin{enumerate}
+        \item Is there a new theoretical insight?
+        \item Or a significant empirical advance? Did they solve a standing open problem? 
+        \item Or a good formulation for a new problem? 
+        \item Any good practical outcome (code, algorithm, etc)?
+        \item Are the experiments well executed? 
+        \item Useful for the community in general? 
+    \end{enumerate}
+    \item \textbf{Weaknesses:}
+    \begin{enumerate}
+        \item What can be done better?
+        \item Any missing baselines? Missing datasets?
+        \item Any odd design choices in the algorithm not explained well? Quality of writing?
+        \item Is there sufficient novelty in what they propose? Minor variation of previous work? 
+        \item Why should anyone care? Is the problem interesting and significant? 
+    \end{enumerate}
+    \item \textbf{Reflections:}
+    \begin{enumerate}
+        \item How does this relate to other concepts you have seen in the class?
+        \item What are the next research directions in this line of work?
+        \item What (directly or indirectly related) new ideas did this paper give you? What would you be curious to try?
+    \end{enumerate}
+
+\end{enumerate}
+
+This question is subjective and so we will accept a variety of answers. You are expected to analyze the paper and offer your own perspective and ideas, beyond what the paper itself discusses.\end{exercise}
+
+\end{document}

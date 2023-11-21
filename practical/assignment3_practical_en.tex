@@ -1,0 +1,266 @@
+\documentclass[12pt]{article}
+\usepackage[canadien]{babel} 
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{enumerate}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{todonotes}
+\usepackage{tikz}
+\usepackage{float}
+\usepackage{xcolor}
+\hypersetup{
+    colorlinks,
+    linkcolor={red!50!black},
+    citecolor={blue!50!black},
+    urlcolor={blue!80!black}
+}
+% If your paper is accepted, change the options for the package
+% aistats2e as follows:
+%
+%\usepackage[accepted]{aistats2e}
+%
+% This option will print headings for the title of your paper and
+% headings for the authors names, plus a copyright note at the end of
+% the first column of the first page.
+\setlength{\parindent}{0cm}
+\addtolength{\oddsidemargin}{-2cm}
+\addtolength{\evensidemargin}{-2cm}
+\setlength{\textwidth}{17.78cm}
+\addtolength{\topmargin}{-2.25cm}
+\setlength{\textheight}{23.24cm}
+\addtolength{\parskip}{5mm}
+\pagestyle{fancy}
+
+%************
+%* COMMANDS *
+%************
+
+\input{./math_commands.tex}
+
+\newif\ifexercise
+\exercisetrue
+%\exercisefalse
+
+\newif\ifsolution
+\solutiontrue
+%\solutionfalse
+
+\usepackage{booktabs}
+\usepackage[ruled,vlined]{algorithm2e}
+
+\usepackage{amsthm}
+\theoremstyle{definition}
+\newtheorem{exercise}{Question}%[chapter]
+\newtheorem{answer}{Answer} % asterisk to remove ordering
+
+\newcommand{\Exercise}[1]{
+\ifexercise#1\fi
+}
+
+\definecolor{answer}{rgb}{0.00, 0.12, 0.60}
+\newcommand{\Answer}[1]{
+\ifsolution\color{answer}\begin{answer}#1\end{answer}\fi
+}
+
+\usepackage{enumitem}
+\newcommand{\staritem}{
+\addtocounter{enumi}{1}
+\item[$\phantom{x}^{*}$\theenumi]}
+\setlist[enumerate,1]{leftmargin=*, label=\arabic*.}
+
+\begin{document}
+
+
+\fancyhead{}
+\fancyfoot{}
+
+\fancyhead[L]{
+  \begin{tabular}[b]{l}
+    IFT6135-A2023  \\
+    Prof: Aishwarya Agrawal \\
+  \end{tabular}
+}
+\fancyhead[R]{
+  \begin{tabular}[b]{r}
+    Assignment 3 - Programming Part  \\
+    Generative Models \\
+  \end{tabular}
+}
+\fancyfoot[C]{- Do not distribute -}
+
+{\bf Due Date: December 8th, 2023 at 11:00 pm}
+
+
+\underline{Instructions}
+%Laissez des traces de votre démarche pour toutes les questions! \\
+\renewcommand{\labelitemi}{\textbullet}
+\begin{itemize}
+\item \emph{This assignment is involved -- please start well ahead of time.}
+\item \emph{For all questions, show your work!}
+\item \emph{The use of AI tools like Chat-GPT to find answers or parts of answers for any question in this assignment is not allowed. However, you can use these tools to improve the quality of your writing, like fixing grammar or making it more understandable. If you do use these tools, you must clearly explain how you used them and which questions or parts of questions you applied them to. Failing to do so or using these tools to find answers or parts of answers may result in your work being completely rejected, which means you'll receive a score of 0 for the entire theory or practical section.}
+\item \emph{Submit your report (PDF) and your code electronically via the course Gradescope page. Your report must contain answers to Problem 1.3, Problems 2.2 - 2.4, Problem 3.2 and Problem 4.  (all questions).}
+\item \emph{For open-ended experiments (question numbers provided above), you do not need to submit code -- a report will suffice.}
+\item \emph{{TAs for this assignment are \textbf{Saba Ahmadi} and \textbf{Sophie Xhonneux}.}}
+\end{itemize}
+
+\vspace{1mm}
+
+\renewcommand{\labelitemi}{\textbullet}
+
+In this assignment, you will be required to implement three different generative models that are widely popular in Machine Learning literature, namely (a) Variational Autoencoders, (b) Generative Adversarial Networks, and (c) Diffusion Models. All of the strategies will be tried on the \href{https://huggingface.co/datasets/mnist}{MNIST dataset}. The MNIST dataset consists of black-and-white images of handwritten digits. 
+
+All the code can be found \href{https://drive.google.com/file/d/1Y1IkDUFmEIocBRJd3cbt8747QEtMiM5R/view?usp=sharing}{here}. To test and get marks your code upload the files \texttt{vae\_solution.py}, \texttt{gan\_solution.py}, and \texttt{diffusion\_solution.py} to gradescope.
+
+For all the models, you have been provided with the starter codes as well as data normalizing and loading scripts. Your job would be to fill up certain missing parts in each of the model implementations (details within the code notebooks and each of the question parts) so as to enable proper training of the generative models.
+
+\textbf{Coding instructions:} You will be required to use PyTorch to complete all questions. Moreover, this assignment \textbf{requires running the models on GPU} (otherwise it will take an incredibly long time); if you don't have access to your own resources (e.g. your own machine, a cluster), please use Google Colab or the GCP credits provided. For most questions, unless specifically asked, please code up the logic using basic \texttt{torch} operations instead of using advanced torch libraries (eg. \texttt{torch.distributions}).
+
+For all the models provided, you are encouraged to train for longer to see even better results.
+
+\textbf{Important}: All the code can be found \href{https://drive.google.com/file/d/1Y1IkDUFmEIocBRJd3cbt8747QEtMiM5R/view?usp=sharing}{here}. To test and get marks your code upload the files \texttt{vae\_solution.py}, \texttt{gan\_solution.py}, and \texttt{diffusion\_solution.py} to gradescope.
+
+% Q1
+\begin{exercise}[] (\textbf{VAE}) 
+
+The task is to implement a Variational Autoencoder on the MNIST dataset. VAEs are a class of latent-variable generative models that work on optimizing the ELBO, which is defined as
+\begin{align*}
+    ELBO(\theta, \phi) &= \sum_{i=1}^N\mathbb{E}_{q_\phi(z|x_i)} [log p_\theta(x_i | z)] + \mathbb{KL}[q_\phi(z | x_i) || p(z)]
+\end{align*}
+where we are given a dataset $\{x_i\}_{i=1}^N$ and $p_\theta(x|z)$ is the conditional likelihood, $p(z)$ is the prior and $q_\phi(z|x)$ is the approximate variational distribution. Optimization is done by maximizing the ELBO, or minimizing the negative of it. That is,
+\begin{align*}
+    \theta^*, \phi^* = \text{argmin}\;\; ELBO(\theta, \phi)
+\end{align*}
+While there can be many choices of such distributions, in this assignment we will restrict our focus on the case where 
+\begin{align*}
+    q_\phi(z|x) &= \mathcal{N}(\mu_\phi(x), \Sigma_\phi(x)) \\
+    p_\theta(x|z) &= \mathcal{N}(\mu_\theta(z), I) \\
+    p(z) &= \mathcal{N}(0, I)
+\end{align*}
+where $\Sigma_\phi(x)$ is a diagonal covariance matrix with the off-diagonal elements as 0.
+
+For implementing the VAE, you will have to
+\begin{enumerate}
+    \item Implement the \texttt{DiagonalGaussianDistribution} class, which will form our backbone to parameterize all Gaussian distributions with diagonal covariance matrices, and will come handy when we are implementing the VAE itself.
+    \begin{itemize}
+        \item (2 pts) Implement the \texttt{sample} function that samples from the given gaussian distribution using the \textbf{reparameterization} trick, so that gradients can be backpropagated through it. (\textit{Reparameterization Trick: You can sample from a gaussian distribution with mean $\mu$ and variance $\sigma^2$ by doing a \textbf{deterministic} mapping of a sample of $\mathcal{N}(0, 1)$})
+        \item (3 pts) Implement the \texttt{kl} function that computes the Kulback Leibler Divergence between the given guassian distribution with the standard normal distribution.
+        \item (3 pts) Implement the \texttt{nll} function that computes the negative of the log likelihood of the input sample based on the parameters of the gaussian distribution.
+        \item (1 pts) Implement the \texttt{mode} function that returns the mode of this gaussian distribution.
+    \end{itemize}
+    \item Implement the \texttt{VAE} class, which is the main model that takes care of encoding the input to the latent space, reconstructing it, generating samples, and computing the required ELBO-based losses and importance-sampling styled log likelihood computations.
+    \begin{itemize}
+        \item (3 pts) Implement the \texttt{encode} function that takes as input a data sample and returns an object of the class \texttt{DiagonalGaussianDistribution} which parameterizes the approximate posterior with mean and log of the variance that are obtained through the \texttt{encoder} and \texttt{self.mean}, \texttt{self.logvar} Neural Networks.
+        \item (3 pts) Implement the \texttt{decode} function that takes as input a sample from the latent space and returns an object of the class \texttt{DiagonalGaussianDistribution} which parameterizes the conditional likelihood distribution with mean obtained from the decoder and the variance fixed as identity. 
+        \item (2 pts) Implement the \texttt{sample} function that takes a batch size as input and outputs the mode of $p_\theta(x|z)$. To do this, first generate $z$ from the prior, then use the $\texttt{decode}$ function to obtain the conditional likelihood distribution, and return its mode.
+        \item (5 pts) Implement the \texttt{log\_likelihood} function which takes as input the data as well as a hyperparameter $K$ and computes an approximation to the log-likelihood, which is a popular metric used in such generative models. To compute the approximate log-likelihood, we need to compute
+        \begin{align*}
+            \log p_\theta(x) &\approx \log \frac{1}{K} \sum_{i=1}^K \underbrace{\frac{p(x_i, z_k)}{q(z_k | x_i)}}_{\Gamma}
+        \end{align*}
+        where $z_k \sim q(z|x_i)$. To compute this, we would actually compute $\log \Gamma$ and then use the \href{https://gregorygundersen.com/blog/2020/02/09/log-sum-exp/}{log-sum-exp} trick to make it more stable. You can use PyTorch's log-sum-exp functionality to do this. It is also recommended to use the \texttt{DiagonalGaussianDistribution} class (that you so painstakingly coded above) in the solutions to this part.
+        \item (3 pts) Finally, implement the \texttt{forward} function that takes as input a data sample, encodes it into a variational distribution, draws a reparameterizable sample from it, decodes it and returns the mode of the decoded distribution. It should also return the conditional negative log-likelihood of the data sample under $p_\theta(x|z)$ and the KL-Divergence with standard normal.
+    \item (2 pts) Finally, finish the code provided in \texttt{interpolate} to provide some visualization of the methodology. This is meant to interpolate (or linearly move) in the latent space between two points and see how such effects of their latent space lead to (possibly smooth?) transitions in the observed space. 
+    \end{itemize}
+    
+    \item After having trained the model, we ask you to provide the following additional results from your experiments. Please provide
+    \begin{enumerate}
+        \item (3 pts) Some reconstructions from the test set and samples from the VAE model at the end of training.
+        \item (2 pts) How do the samples look? Do you see digit patters; are the samples blurry?
+        \item (2 pts) Images of the Interpolation results from the code. Is the interpolation between two points smooth? Do you see the images changing smoothly?
+    \end{enumerate}
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[] (\textbf{GAN}) 
+
+The task here is to implement a Generative Adversarial Network (GAN) on the MNIST dataset. GANs are a class of implicit generative models that do not work on maximum likelihood but instead rely on adversarial training, where a discriminator is trained to distinguish between real data and data generated from a generator, which in turn tries to fool the discriminator. Formally, this leads to a 2-player game and the following min-max optimization problem
+\begin{align*}
+    \min_G \max_D \mathbb{E}_{x\sim p_{data}}[\log D(x)] + \mathbb{E}_{z\sim p_z} [\log (1 - D(G(z))]
+\end{align*}
+In practice, the discriminator (D) is not trained to optimiality before doing one step on the generator. Instead we alternate between a set number of steps for the discriminator followed by a step of generator training. In this homework, we will just alternate between one step of the discriminator and one step of the discriminator but in practice, performing more steps on the discriminator for each step of the generator has shown some improvements.
+
+Further, to allow for better training and to avoid gradient problems (saturating gradients problem), the generator is instead trained in its step to maximize $\log D(G(z))$ as opposed to minimizing $\log (1 - D(G(z)))$.
+
+\begin{enumerate}
+\item Implement the GAN model and training through the following steps
+    \begin{itemize}
+        \item (3 pts) Define the \texttt{optimizers} using PyTorch's in-built functions for both the generator and the discriminator networks. Each of the optimizer should be \texttt{Adam} with the learning rates as provided in the notebook, and betas hyperparameter set to $(0.5, 0.999)$.
+        \item (2 pts) Define the \texttt{criterion} using PyTorch's in-built criterions so that it is suitable for training of the GAN objective. 
+        \item (5 pts) Complete the method \texttt{discriminator\_train} that takes as input real and fake samples and returns the loss for the discriminator.
+        \item (5 pts) Complete the method \texttt{generator\_train} that takes as input fake samples and returns the loss for the generator.
+        \item (2 pts) Complete the \texttt{sample} method, that samples \texttt{num\_samples} number of samples using the generator.
+        \item (2 pts) Implement the \texttt{interpolate} function that interpolates between the two points using \texttt{n\_samples} number of points, and returns the generated image corresponding to each.
+    \end{itemize}
+\item After having trained the model, we ask you to provide the following additional results and insights from your experiments. Please provide
+\begin{enumerate}
+    \item (3 pts) Some generated samples from the GAN model at the end of training.
+    \item (2 pts) How do the samples look? Are they blurry? Compare them with VAE samples.
+    \item (2 pts) Provide images for the interpolation result between two points from the noise distribution. Is the interpolation smooth?
+\end{enumerate}
+\item (3 pts) In the training loop (second last cell), we needed to use \texttt{.detach()} in the discriminator training for the fake generated images. Is it essential, and if so, why?
+\item (5 pts) Can the GAN model, as it currently is, be used for (a) reconstructing input images, (b) computing (exactly or approximately) the log-likelihood, or (c) representation learning?
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[] (\textbf{Diffusion Models}) 
+
+The task here is to implement the Denoising Diffusion Probabilistic Model (DDPM) on the MNIST dataset. Diffusion models are an up-and-coming class of generative models that rely on a known forward diffusion process, which progressively destroys structure from the data until it converges to unstructured noise, eg. $\mathcal{N}(0, I)$ and a learned parameterized (by a Neural Network!) backward process that iteratively removes noise until you have obtained a sample from the data distribution.
+
+In particular, one constructs the forward diffusion process as
+\begin{align*}
+    q(x_t | x_{t-1}) = \mathcal{N}(\sqrt{1-\beta_t} x_{t-1}, \beta_t I)
+\end{align*}
+with $\beta_t$'s defining the noise schedules, typically kept as 0.0001 at $t=1$ and 0.02 at $t=T$ with a linear schedule in between. One can see this process as iteratively adding more noise to the sample and destroying the structure in it.
+
+The backward process then parameterizes a distribution
+\begin{align*}
+    p_\theta(x_{t-1} | x_t) = \mathcal{N}(\mu_\theta(x_t, t), \tilde{\beta}_t I)
+\end{align*}
+where $\tilde{\beta}_t$ is the variance of the distribution $q(x_{t-1} | x_t, x_0)$, and by learning the parameter $\theta$, one hopes to \textbf{denoise} slightly from $x_t$ to $x_{t-1}$. With a bit of algebra and through some computations, this leads to parameterizing a noise model instead of the mean, that is $\epsilon_\theta(x_t, t)$, which equivalently leads to the distribution
+\begin{align*}
+    p_\theta(x_{t-1} | x_t) = \mathcal{N}(\frac{1}{\sqrt{\alpha_t}} \left(x_t - \frac{1 - \alpha_t}{\sqrt{1 - \bar{\alpha}_t}} \epsilon_\theta(x_t, t)\right), \tilde{\beta}_t I)
+\end{align*}
+This leads to the training objective being just prediction of noise,
+\begin{align*}
+    \mathbb{E}_{t\sim \mathcal{U}(1,T), x_0, \epsilon_t} \left[|| \epsilon_t - \epsilon_\theta(\sqrt{\bar{\alpha}_t} x_0 + \sqrt{1 - \bar{\alpha}_t} \epsilon_t, t) ||^2\right]
+\end{align*}
+and the sampling being iterative, where a data sample is obtained by sampling $x_T \sim \mathcal{N}(0, I)$ and then progressively sampling $x_{t} \sim p_\theta(x_{t-1} | x_t)$. For more details, please refer to the theory provided in the colab notebook, as well as the original DDPM paper and a popular blog post, both linked to in the notebook.
+\begin{enumerate}
+    \item Implement the DDPM model and training by following the given steps:
+    \begin{itemize}
+        \item (5 pts) Pre-compute the following useful coefficients / variables: $\beta_t$, $\alpha_t$, $\frac{1}{\sqrt{\alpha_t}}$, $\bar{\alpha_t}$, $\sqrt{\bar{\alpha}_t}$, $\sqrt{1 - \bar{\alpha}_t}$, $\bar{\alpha}_{pt}$ (which is $\bar{\alpha}_t$ right-shifted and padded with 1), and $\tilde{\beta}_t$. Details are provided in the Notebook.
+        \item (5 pts) Complete the \texttt{q\_sample} function that implements sampling from the distribution $q(x_t | x_0)$ using the reparameterization trick. 
+        \item (5 pts) Complete the \texttt{p\_sample} function that implements sampling from the distribution $p(x_{t-1} | x_t)$ using the reparameterization trick.
+        \item (2 pts) Complete the \texttt{p\_sample\_loop} function that uses \texttt{p\_sample} function and iteratively denoises completely random noise from $t=T$ to $t=1$.
+        \item (5 pts) Implement the \texttt{p\_losses} function that generates some random noise, uses this random noise to get a noisy sample, gets its noise prediction, and then returns the \textbf{smoothed $L_1$ loss} between the predicted and true noise.
+        \item (1 pts) Finally, implement the random sampling of time-steps in the function \texttt{t\_sample}.
+    \end{itemize}
+    \item After having trained the model, we ask you to provide the following additional results and insights from your experiments. Please provide
+    \begin{enumerate}
+        \item (3 pts) Some generated samples from the Diffusion model at the end of training.
+        \item (2 pts) How do the samples look? Compare them with VAE and GAN samples.
+    \end{enumerate}
+\end{enumerate}
+\end{exercise}
+\begin{exercise}[] (\textbf{Generative Models; benefits and pitfalls})
+
+Now that you have implemented the three popular generative models: VAE, GAN and DDPM, can you comment on the following
+\begin{enumerate}
+    \item (6 pts) What are the biggest strengths and draw-backs (in terms of quality and diversity of the generated samples, computational load at training and inference, etc.) of
+    \begin{itemize}
+        \item VAE models?
+        \item GAN models?
+        \item DDPM models?
+    \end{itemize}
+\end{enumerate}
+\end{exercise}
+\end{document}
