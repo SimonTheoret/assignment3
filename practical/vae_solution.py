@@ -42,10 +42,7 @@ class Decoder(nn.Module):
         self.out_size = isize // 16
         self.decoder_dense = nn.Sequential(
             nn.Linear(nz, ndf * 8 * self.out_size * self.out_size), nn.ReLU(True)
-
-
-
-)
+        )
 
         self.decoder_conv = nn.Sequential(
             nn.UpsamplingNearest2d(scale_factor=2),
@@ -103,7 +100,7 @@ class DiagonalGaussianDistribution(object):
         # from the wiki article: https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Kullback%E2%80%93Leibler_divergence
 
         kl_div = None  # WRITE CODE HERE
-        var_inv = torch.pow(self.var, -1)
+        # var_inv = torch.pow(self.var, -1)
         dim = self.mean.shape[1]  # dimensions of a single example
         trace = torch.sum(self.var)
         prod = torch.matmul(torch.flatten(self.mean), torch.flatten(self.mean))
@@ -201,7 +198,7 @@ class VAE(nn.Module):
         x = self.encoder(x)
         mean = self.mean(x)
         logvar = self.logvar(x)
-        return DiagonalGaussianDistribution(mean = mean, logvar = logvar)
+        return DiagonalGaussianDistribution(mean=mean, logvar=logvar)
 
     def decode(self, z):
         # Input:
@@ -212,7 +209,7 @@ class VAE(nn.Module):
         # WRITE CODE HERE
         z = self.decoder(z)
         id = torch.ones_like(z)
-        return DiagonalGaussianDistribution(mean = z, logvar = id)
+        return DiagonalGaussianDistribution(mean=z, logvar=id)
 
     def sample(self, batch_size, noise=None):
         # Input:
@@ -222,7 +219,7 @@ class VAE(nn.Module):
         #            Size: (batch_size, 3, 32, 32)
         # WRITE CODE HERE
         if noise == None:
-            z = torch.randn(batch_size,3,32,32)
+            z = torch.randn(batch_size, 3, 32, 32)
         else:
             z = noise
         return self.decode(z).mode()
@@ -230,7 +227,8 @@ class VAE(nn.Module):
 
         pass
 
-    def log_likelihood(self, x, K=100):
+    def log_likelihood(self, x, K=100):  # HACK: this might not work att all
+        #BUG: If there is a bug, it's most likely in here
         # Approximate the log-likelihood of the data using Importance Sampling
         # Inputs:
         #   x: Data sample tensor of shape (batch_size, 3, 32, 32)
@@ -242,15 +240,24 @@ class VAE(nn.Module):
         prior = DiagonalGaussianDistribution(torch.zeros_like(posterior.mean))
 
         log_likelihood = torch.zeros(x.shape[0], K).to(self.device)
+
         for i in range(K):
-            z = None  # WRITE CODE HERE (sample from q_phi)
-            recon = None  # WRITE CODE HERE (decode to conditional distribution)
-            log_likelihood[
-                :, i
-            ] = None  # WRITE CODE HERE (log of the summation terms in approximate log-likelihood, that is, log p_\theta(x, z_i) - log q_\phi(z_i | x))
+            z = posterior.sample()  # WRITE CODE HERE (sample from q_phi)
+            recon = self.decode(
+                z
+            )  # WRITE CODE HERE (decode to conditional distribution)
+
+            log_likelihood[:, i] = (
+                -prior.nll(z) + posterior.nll(z) - recon.nll(x)
+            )  # WRITE CODE HERE (log of the summation
+            # terms in approximate log-likelihood, that is, log p_\theta(x, z_i) -
+            # log q_\phi(z_i | x))
+
             del z, recon
 
-        ll = None  # WRITE CODE HERE (compute the final log-likelihood using the log-sum-exp trick)
+        ll = (
+            1 / K * torch.logsumexp(log_likelihood, dim=-1)
+        )  # WRITE CODE HERE (compute the final log-likelihood using the log-sum-exp trick)
         return ll
 
     def forward(self, x, noise=None):
@@ -263,9 +270,9 @@ class VAE(nn.Module):
         #                                         Size: (batch_size,)
         #   KL: The KL Divergence between the variational approximate posterior with N(0, I)
         #       Size: (batch_size,)
-        posterior = None  # WRITE CODE HERE
-        latent_z = None  # WRITE CODE HERE (sample a z)
-        recon = None  # WRITE CODE HERE (decode)
+        posterior = self.encode(x)  # WRITE CODE HERE
+        latent_z = posterior.sample(noise)  # WRITE CODE HERE (sample a z)
+        recon = self.decode(latent_z)  # WRITE CODE HERE (decode)
 
         return recon.mode(), recon.nll(x), posterior.kl()
 
@@ -280,5 +287,7 @@ def interpolate(model, z_1, z_2, n_samples):
     #   sample: The mode of the distribution obtained by decoding each point in the latent space
     #           Should be of size (n_samples, 3, 32, 32)
     lengths = torch.linspace(0.0, 1.0, n_samples).unsqueeze(1).to(z_1.device)
-    z = None  # WRITE CODE HERE (interpolate z_1 to z_2 with n_samples points)
+    z = (
+        z_1 * lengths + (1 - lengths) * z_2
+    )  # WRITE CODE HERE (interpolate z_1 to z_2 with n_samples points)
     return model.decode(z).mode()
