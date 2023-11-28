@@ -220,7 +220,12 @@ class VAE(nn.Module):
         # Returns:
         #   samples: Generated samples using the decoder
         #            Size: (batch_size, 3, 32, 32)
-
+        # WRITE CODE HERE
+        if noise == None:
+            z = torch.randn(batch_size,3,32,32)
+        else:
+            z = noise
+        return self.decode(z).mode()
         # WRITE CODE HERE
 
         pass
