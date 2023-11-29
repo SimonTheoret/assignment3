@@ -88,8 +88,10 @@ class DiagonalGaussianDistribution(object):
         # Provide a reparameterized sample from the distribution
         # Return: Tensor of the same size as the mean
         sample = None  # WRITE CODE HERE
+
         if noise == None:
-            sample = self.mean + self.std * torch.randn(self.mean.shape)
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            sample = self.mean + self.std * torch.randn(self.mean.shape).to(device)
         else:
             sample = self.mean + self.std * noise
         return sample
@@ -103,7 +105,7 @@ class DiagonalGaussianDistribution(object):
         # var_inv = torch.pow(self.var, -1)
         dim = self.mean.shape[1]  # dimensions of a single example
         trace = torch.sum(self.var)
-        prod = torch.matmul(torch.flatten(self.mean), torch.flatten(self.mean))
+        prod = torch.matmul(self.mean, torch.transpose(self.mean, -1, -2)).squeeze() # BUG: problem with flatten
         log_det = torch.log(torch.prod(self.var))
         kl_div = 0.5 * (trace + prod - dim - log_det)
         return kl_div
@@ -131,8 +133,8 @@ class DiagonalGaussianDistribution(object):
         # from the wiki article: https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Likelihood_function
         negative_ll = None  # WRITE CODE HERE
         log_det = torch.log(torch.prod(self.var))
-        var_inv = torch.flatten(torch.pow(self.var, -1))
-        prod = torch.matmul(sample - self.mean, var_inv * (sample - self.mean))
+        var_inv = torch.pow(self.var, -1)# BUG: problem with flatten
+        prod = torch.matmul((sample - self.mean), var_inv * torch.transpose(sample - self.mean, -1, -2))
         const = self.mean.shape[1] * log(pi)
         negative_ll = 0.5 * (log_det + prod + const)
         return negative_ll
@@ -219,7 +221,7 @@ class VAE(nn.Module):
         #            Size: (batch_size, 3, 32, 32)
         # WRITE CODE HERE
         if noise == None:
-            z = torch.randn(batch_size, 3, 32, 32)
+            z = torch.randn(batch_size, 3, 32, 32).to(self.device)
         else:
             z = noise
         return self.decode(z).mode()
