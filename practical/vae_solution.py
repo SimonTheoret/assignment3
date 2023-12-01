@@ -102,10 +102,11 @@ class DiagonalGaussianDistribution(object):
         # from the wiki article: https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Kullback%E2%80%93Leibler_divergence
 
         kl_div = None  # WRITE CODE HERE
+        device = "cuda" if torch.cuda.is_available() else "cpu"
         # var_inv = torch.pow(self.var, -1)
         dim = self.mean.shape[1]  # dimensions of a single example
         trace = torch.sum(self.var)
-        prod = torch.matmul(self.mean, torch.transpose(self.mean, -1, -2)).squeeze() # BUG: problem with flatten
+        prod = torch.matmul(self.mean, torch.eye(dim).to(device) @torch.transpose(self.mean, -1, -2)).squeeze()
         log_det = torch.log(torch.prod(self.var))
         kl_div = 0.5 * (trace + prod - dim - log_det)
         return kl_div
@@ -127,17 +128,40 @@ class DiagonalGaussianDistribution(object):
         # kl_div = nn.KLDivLoss(reduction="none")(samples_proba, normal_proba.log())
         # return kl_div
 
-    def nll(self, sample, dims=[1, 2, 3]):
+    def nll(self, sample, dims=[1, 2, 3]): #BUG: dim not OK
         # Computes the negative log likelihood of the sample under the given distribution
         # Return: Tensor of size (batch size,) containing the log-likelihood for each element in the batch
         # from the wiki article: https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Likelihood_function
         negative_ll = None  # WRITE CODE HERE
-        log_det = torch.log(torch.prod(self.var))
-        var_inv = torch.pow(self.var, -1)# BUG: problem with flatten
-        prod = torch.matmul((sample - self.mean), var_inv * torch.transpose(sample - self.mean, -1, -2))
-        const = self.mean.shape[1] * log(pi)
-        negative_ll = 0.5 * (log_det + prod + const)
-        return negative_ll
+
+        # batch_size x channel x image_dim (64 x 1 x 32^2)
+        var = torch.flatten(self.var, start_dim = 2)
+        var = torch.pow(var, -1)
+        mean = torch.flatten(self.mean, start_dim = 2)
+        sample = torch.flatten(sample, start_dim = 2)
+        # log_det = torch.log(torch.prod(var, dim = 2))
+        log_det = torch.sum(torch.log(var), dim = 2)
+        diff = sample-mean
+        prod = torch.bmm(diff*var, torch.transpose(diff, 1, 2))
+        const = mean.shape[2] * log(2*pi)
+        # print(log_det)
+        return -0.5 * (log_det + prod + const)
+
+        #old:
+        # prod_1 = (var_inv @ (sample - mean))
+        # diff = sample-self.mean
+        # prod = (sample - self.mean) @ prod_1 #BUG: mauvaise dim
+        # negative_ll = 0.5 * (log_det + prod + const)
+        # return negative_ll
+        #old:
+        # mean = torch.reshape(self.mean, (64, 1, 32**2))
+        # var = torch.reshape(self.var, (64, 1, 32**2))
+        # sample = torch.reshape(sample, (64, 1, 32**2))
+        # val = torch.nn.functional.gaussian_nll_loss(input = mean, target = sample, var = var, full = True)
+        # print(val)
+        # return val
+
+
 
         # old:
         # dim = self.mean.shape
@@ -227,7 +251,6 @@ class VAE(nn.Module):
         return self.decode(z).mode()
         # WRITE CODE HERE
 
-        pass
 
     def log_likelihood(self, x, K=100):  # HACK: this might not work att all
         #BUG: If there is a bug, it's most likely in here
