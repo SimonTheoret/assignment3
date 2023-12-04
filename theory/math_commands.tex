@@ -510,3 +510,48 @@
 \newcommand{\diag}{\mathop{\mathrm{diag}}\nolimits}
 \usepackage{cancel}
 \newcommand{\ttt}[1]{\texttt{#1}}
+
+
+% \newcommand\pixelcnnnewcoor[3]%
+%    {\expandafter\def\csname pixelcnncy:#1\endcsname{#2}
+%     \expandafter\def\csname pixelcnncx:#1\endcsname{#3}%
+%     }
+% \newcommand\pixelcnncx[1]{\expandafter\csname pixelcnncx:#1\endcsname}
+% \newcommand\pixelcnncy[1]{\expandafter\csname pixelcnncy:#1\endcsname}
+
+
+% \newcommand{\visible}[1]{
+% \node[fill=black!20] at (\pixelcnncx{#1},\pixelcnncy{#1}) {};
+% }
+% \pixelcnnnewcoor{11}{+1.25}{-0.75}
+% \pixelcnnnewcoor{12}{+1.25}{-0.25}
+% \pixelcnnnewcoor{13}{+1.25}{+0.25}
+% \pixelcnnnewcoor{14}{+1.25}{+0.75}
+% \pixelcnnnewcoor{15}{+1.25}{+1.25}
+% \pixelcnnnewcoor{21}{+0.75}{-0.75}
+% \pixelcnnnewcoor{22}{+0.75}{-0.25}
+% \pixelcnnnewcoor{23}{+0.75}{+0.25}
+% \pixelcnnnewcoor{24}{+0.75}{+0.75}
+% \pixelcnnnewcoor{25}{+0.75}{+1.25}
+% \pixelcnnnewcoor{31}{+0.25}{-0.75}
+% \pixelcnnnewcoor{32}{+0.25}{-0.25}
+% \pixelcnnnewcoor{33}{+0.25}{+0.25}
+% \pixelcnnnewcoor{34}{+0.25}{+0.75}
+% \pixelcnnnewcoor{35}{+0.25}{+1.25}
+% \pixelcnnnewcoor{41}{-0.25}{-0.75}
+% \pixelcnnnewcoor{42}{-0.25}{-0.25}
+% \pixelcnnnewcoor{43}{-0.25}{+0.25}
+% \pixelcnnnewcoor{44}{-0.25}{+0.75}
+% \pixelcnnnewcoor{45}{-0.25}{+1.25}
+% \pixelcnnnewcoor{51}{-0.75}{-0.75}
+% \pixelcnnnewcoor{52}{-0.75}{-0.25}
+% \pixelcnnnewcoor{53}{-0.75}{+0.25}
+% \pixelcnnnewcoor{54}{-0.75}{+0.75}
+% \pixelcnnnewcoor{55}{-0.75}{+1.25}
+% \newcommand{\drawgrid}{
+% \draw[step=0.5cm,color=gray] (-1.00,-1.00) grid (1.50,1.50);
+% \foreach \y [count=\yi] in {+1.25,+0.75,+0.25,-0.25,-0.75}
+% \foreach \x [count=\xi] in {-0.75,-0.25,0.25,0.75,1.25}
+%     \node at (\x,\y)
+%     {{\small \yi\xi}};
+% }
