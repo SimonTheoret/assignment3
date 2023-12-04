@@ -16,6 +16,9 @@
 \usepackage{multirow}
 \usepackage{hyperref}
 \usepackage{comment}
+\usepackage{tikz}
+\usepackage{graphicx}
+\usepackage{float}
 
 \setlength{\parindent}{0cm}
 \addtolength{\oddsidemargin}{-2cm}
@@ -203,7 +206,37 @@ Specify the receptive field of the output pixel that corresponds to the third ro
 Your answer should look like Figure~\ref{fig:pixcnn5} (Right). 
 }
 \end{exercise}
-
+\Answer{
+  \subsubsection*{1.1}
+  First, note that
+  \begin{equation}
+    K \odot M^{A} =
+        \begin{bmatrix}
+            a & b & c \\
+            d & 0 & 0 \\
+            0 & 0 & 0
+        \end{bmatrix}
+        \label{kma}
+    \end{equation}
+    and that
+    \begin{equation}
+      A^{AA} := (A * (K \odot M^{A}) * (K \odot M^{A})).
+      \label{aaa}
+    \end{equation}
+    The receptive field of $A_{33}^{AA}$ is
+    \begin{equation}
+      A^{AA}_{33} = aA^{A}_{22} +  b A^{A}_{23} + c   A^{A}_{24} + d A^{A}_{32}
+    \label{eqaa}
+    \end{equation}
+    To find the explicit receptive field of $A^{AA}_f{33}$, we
+    need to find the receptive field of the $A^{A}_{ij}$ in the equation \ref{eqaa}.
+    The receptive field of  $A^{A}_{22}$ is the set $\{11, 12 ,13, 21\}$
+    The receptive field of  $A^{A}_{23}$ is the set $\{12, 13 ,14, 22\}$
+    The receptive field of  $A^{A}_{24}$ is the set $\{13, 14 ,15, 23\}$
+    The receptive field of  $A^{A}_{32}$ is the set $\{21, 22 ,23, 31\}$.
+    Therefore, the receptive field of $A^{AA}_{33}$ is the union of sets.
+    % TODO: insérer matrice icite!
+}
 \begin{exercise}[5-5] (\textbf{Normalizing Flows})
 In this question, we study some properties of normalizing flows. Let $X \sim P_X$ and $U \sim P_U$ be, respectively, the distribution of the data and a base distribution (e.g. an isotropic gaussian). We define a normalizing flow as $F: \mathcal{U} \rightarrow \mathcal{X}$ parametrized by $\vtheta$. Starting with $P_U$ and then applying $F$ will induce a new distribution $P_{F(U)}$ (used to match $P_X$). Since normalizing flows are invertible, we can also consider the distribution $P_{F^{-1}(X)}$.
 %(after minimizing the forward KL divergence $D_{KL}[p_X(\vx) || q_X(\vx;\theta)]$).
@@ -216,6 +249,46 @@ However, some flows, like planar flows, are not easily invertible in practice. I
 \end{enumerate}
 
 \end{exercise}
+
+\Answer{
+  \subsubsection*{2.1}
+Suppose we have the density of $P_{X }$ and $P_{U}$ has $p(x)$ and $q(u)$ respectively.
+By applying a change of variable ($x = F(u)$ for some $u$ and $u = F^{-1}(x)$
+for some $x$), we obtain the following density for each distributions:
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+Distribution & Density  \\
+ $P_X $ & $p(x)$ \\
+ $P_{F^{-1}(X)}$&  $p(F(u))\vert \text{det}_{J_{f}} \vert $ \\
+ $P_U $& $q(u)$ \\
+ $P_{F(U)} $& $q(F^{-1}(x)) \vert \text{det}_{J_{F^{-1}}}  \vert$
+\end{tabular}%
+\end{table}
+Let's compute the KL divergences:
+\begin{align*}
+  D_{KL} (P_{X}|| P_{F(u)}) &= \int_{X} p(x) (\log p(x) - \log q(F^{-1}(x)) - \log |\text{det} J_{F^{-1}}|) dx \\
+\end{align*} We apply the change of variable $x = F(u)$,
+$dx = | \text{det} J_{F}| du$ and noting that
+$|\text{det} J_{F}|= | \text{det} J_{F^{-1}} |^{-1}$. We can rewrite our
+equation as follows:
+\begin{align*}
+D_{KL} (P_{X}|| P_{F(u)}) &= \int_{U} p(F(u))|\text{det}  J_{F}| (\log p(F(u)) - \log q(u) + log | \text{det} J_F |) du\\
+  &= D_{KL}(P_{F^{-1}(X) }|| P_{U})
+\end{align*}Therefore, we have proved the requested equation.
+  \subsubsection*{2.2}
+  \paragraph{i}
+  In the first scenario, we would use $D_{KL}(P_{X}||P_{F(U)})$, because we can
+  calculate the integral if we have the values of $p(x)$. Note that having
+  samples from the distribution $p(x)$ is not required to calculated
+  the term $\log q(F^{-1}(x))$ in $D_{KL}(P_{X}||P_{F(U)})$, as the values of
+  $x$ are 'contained' in the integral calculation.
+  \paragraph{ii} In the second scenario, we would use $D_{KL}(P_{F(U)}||P_{X})$
+  because with enough samples from $p(x)$, we can approximate the integral with
+  numerical methods such as Monte Carlo integration, as this method does not
+  require to know exactly the value of $p(x)$ but to have the ability to sample
+  from $P_{X}$.
+}
 
 \begin{exercise}[3-8-3-14] (\textbf{Variational Autoencoders})
 \begin{enumerate}
@@ -258,6 +331,12 @@ However, some flows, like planar flows, are not easily invertible in practice. I
 \end{enumerate}
 \end{exercise}
 
+\Answer{
+
+
+
+  answer here
+}
 \begin{exercise}[2-2-2-3-3-10] (\textbf{Generative Adversarial Networks})
 \begin{enumerate}
     \item Consider a Generative Adversarial Network (GAN) which successfully produces images of apples. Which of the following propositions is false?
@@ -297,6 +376,10 @@ However, some flows, like planar flows, are not easily invertible in practice. I
     \emph{Hint: Find the closed form solution for $D^*$.}
 \end{enumerate}\end{exercise}
 
+\Answer{
+
+  answer here
+}
 \begin{exercise}[5-5-5-5] (\textbf{Self-Supervised Learning: Paper Review})
 
 
@@ -338,4 +421,8 @@ Your review should have the following four sections: Summary, Strengths, Weaknes
 
 This question is subjective and so we will accept a variety of answers. You are expected to analyze the paper and offer your own perspective and ideas, beyond what the paper itself discusses.\end{exercise}
 
+\Answer{
+
+  answer here
+}
 \end{document}
