@@ -135,30 +135,47 @@ class DiagonalGaussianDistribution(object):
         # Return: Tensor of size (batch size,) containing the log-likelihood for each element in the batch
         # from the wiki article: https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Likelihood_function
         # shape var == shape sample = shape mean
-        var = self.var
-        var_inv = torch.pow(var, -1)
-        diff = sample - self.mean
-        print(dims)
-        det = torch.prod(var,dim = dims[-1])
-        print("passe 1")
-        for dim in dims[:-1]:
-            det *= torch.prod(var, dim = dim)
-        print("passe 2")
-        log_det = torch.log(det)
-        print("passe 3")
-        elem = (diff * var_inv)
-        print(elem.shape)
-        print(diff.shape)
-        shape_pos =  len(diff.shape)-1
-        dist = torch.matmul(elem , torch.transpose(diff, shape_pos-2, shape_pos-1 )) if len(dims)>=2 else torch.matmul(elem, diff.T)
-        const = log(2 * pi)
-        for i in range(1, len(sample.shape)):
-            const*= sample.shape[i]
-        print("passe 4")
-        print(log_det.shape)
-        print(dist.shape)
-        negative_ll = 0.5 * torch.sum(log_det + dist + const, dim=dims)
-        return negative_ll
+        start = 1
+        # print(sample.shape)
+        var = torch.flatten(self.var, start_dim=start) #3x16^2 = 3 x 256
+        mean = torch.unsqueeze(torch.flatten(self.mean, 1), 1)
+        samples = torch.unsqueeze(torch.flatten(sample,1), 1)
+        log_det = torch.log(torch.prod(var, dim=1))
+        # print("log_det shape:", log_det.shape)
+
+        diff = (samples - mean)
+        var = torch.unsqueeze(var, 1)
+        exp = torch.squeeze(torch.bmm(diff * var.pow_(-1), torch.transpose(diff, 1, 2)))
+        # print("exp shape:", exp.shape)
+        # exp = torch.reshape(exp, (sample.shape[0]))
+        const = log(2 * pi) * samples.shape[-1]
+        res = 0.5 * torch.squeeze(const + log_det + exp)
+        # print("res shape:", res.shape)
+        return res
+        # var = self.var
+        # var_inv = torch.pow(var, -1)
+        # diff = sample - self.mean
+        # print(dims)
+        # det = torch.prod(var,dim = dims[-1])
+        # print("passe 1")
+        # for dim in dims[:-1]:
+        #     det *= torch.prod(var, dim = dim)
+        # print("passe 2")
+        # log_det = torch.log(det)
+        # print("passe 3")
+        # elem = (diff * var_inv)
+        # print(elem.shape)
+        # print(diff.shape)
+        # shape_pos =  len(diff.shape)-1
+        # dist = torch.matmul(elem , torch.transpose(diff, shape_pos-2, shape_pos-1 )) if len(dims)>=2 else torch.matmul(elem, diff.T)
+        # const = log(2 * pi)
+        # for i in range(1, len(sample.shape)):
+        #     const*= sample.shape[i]
+        # print("passe 4")
+        # print(log_det.shape)
+        # print(dist.shape)
+        # negative_ll = 0.5 * torch.sum(log_det + dist + const, dim=dims)
+        # return negative_ll
 
     # negative_ll = None  # WRITE CODE HERE
     # log_det = torch.log(torch.det(self.var))
@@ -302,26 +319,30 @@ class VAE(nn.Module):
             recon = self.decode(
                 z
             )  # WRITE CODE HERE (decode to conditional distribution)
-            print("prio not ok")
-            shape = list(range(len(z.shape)))[:-1]
-            prio = -prior.nll(z, dims = shape)
-            print("prio ok")
-            posterio = posterior.nll(z, dims = shape)
-            print("posterio ok")
-            recon = -recon.nll(x, dims = shape)
-            print("recon ok")
-            log_likelihood[:, i] = (
+            # print("prio not ok")
+            prio = -prior.nll(z, )
+            # print("prio ok")
+            posterio = posterior.nll(z)
+            # print("posterio ok")
+            recon = -recon.nll(x)
+            # print("recon ok")
+            # print(x.shape)
+            # print(prio.shape)
+            # print(posterio.shape)
+            # print(recon.shape)
+            log_likelihood[:, i] = 1 / K *(
                 prio + posterio + recon
             )  # WRITE CODE HERE (log of the summation
             # terms in approximate log-likelihood, that is, log p_\theta(x, z_i) -
             # log q_\phi(z_i | x))
-
+            # print("sum ok")
             del z, recon
 
         ll = (
-            1 / K * torch.logsumexp(log_likelihood, dim=-1)
+             torch.logsumexp(log_likelihood, dim=-1)
         )  # WRITE CODE HERE (compute the final log-likelihood using the log-sum-exp trick)
         return ll
+
 
     def forward(self, x, noise=None):
         # Input:
@@ -345,6 +366,7 @@ class VAE(nn.Module):
         print("log likelihood ok")
         kl = post.kl()
         print("KL ok")
+        print(f"mode: { mode }, nll: {nll}, kl: {kl}")
         return mode, nll, kl
 
         # old:
