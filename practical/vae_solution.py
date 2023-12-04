@@ -106,7 +106,9 @@ class DiagonalGaussianDistribution(object):
         # var_inv = torch.pow(self.var, -1)
         dim = self.mean.shape[1]  # dimensions of a single example
         trace = torch.sum(self.var)
-        prod = torch.matmul(self.mean, torch.eye(dim).to(device) @torch.transpose(self.mean, -1, -2)).squeeze()
+        prod = torch.matmul(
+            self.mean, torch.eye(dim).to(device) @ torch.transpose(self.mean, -1, -2)
+        ).squeeze()
         log_det = torch.log(torch.prod(self.var))
         kl_div = 0.5 * (trace + prod - dim - log_det)
         return kl_div
@@ -128,50 +130,81 @@ class DiagonalGaussianDistribution(object):
         # kl_div = nn.KLDivLoss(reduction="none")(samples_proba, normal_proba.log())
         # return kl_div
 
-    def nll(self, sample, dims=[1, 2, 3]): #BUG: dim not OK
+    def nll(self, sample, dims=[1, 2, 3]):  # BUG: dim not OK
         # Computes the negative log likelihood of the sample under the given distribution
         # Return: Tensor of size (batch size,) containing the log-likelihood for each element in the batch
         # from the wiki article: https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Likelihood_function
-        negative_ll = None  # WRITE CODE HERE
+        # shape var == shape sample = shape mean
+        var = self.var
+        var_inv = torch.pow(var, -1)
+        diff = sample - self.mean
+        print(dims)
+        det = torch.prod(var,dim = dims[-1])
+        print("passe 1")
+        for dim in dims[:-1]:
+            det *= torch.prod(var, dim = dim)
+        print("passe 2")
+        log_det = torch.log(det)
+        print("passe 3")
+        elem = (diff * var_inv)
+        print(elem.shape)
+        print(diff.shape)
+        shape_pos =  len(diff.shape)-1
+        dist = torch.matmul(elem , torch.transpose(diff, shape_pos-2, shape_pos-1 )) if len(dims)>=2 else torch.matmul(elem, diff.T)
+        const = log(2 * pi)
+        for i in range(1, len(sample.shape)):
+            const*= sample.shape[i]
+        print("passe 4")
+        print(log_det.shape)
+        print(dist.shape)
+        negative_ll = 0.5 * torch.sum(log_det + dist + const, dim=dims)
+        return negative_ll
 
-        # batch_size x channel x image_dim (64 x 1 x 32^2)
-        var = torch.flatten(self.var, start_dim = 2)
-        var = torch.pow(var, -1)
-        mean = torch.flatten(self.mean, start_dim = 2)
-        sample = torch.flatten(sample, start_dim = 2)
-        # log_det = torch.log(torch.prod(var, dim = 2))
-        log_det = torch.sum(torch.log(var), dim = 2)
-        diff = sample-mean
-        prod = torch.bmm(diff*var, torch.transpose(diff, 1, 2))
-        const = mean.shape[2] * log(2*pi)
-        # print(log_det)
-        return -0.5 * (log_det + prod + const)
+    # negative_ll = None  # WRITE CODE HERE
+    # log_det = torch.log(torch.det(self.var))
+    # diff = sample - self.mean
+    # dist = diff @ torch.inverse(self.var) @ diff
+    # const = self.mean.shape[0]*self.mean.shape[1]*self.mean.shape[2]*log(2*pi)
+    # negative_ll  = -0.5 *( log_det + dist + const )
+    # return negative_ll
 
-        #old:
-        # prod_1 = (var_inv @ (sample - mean))
-        # diff = sample-self.mean
-        # prod = (sample - self.mean) @ prod_1 #BUG: mauvaise dim
-        # negative_ll = 0.5 * (log_det + prod + const)
-        # return negative_ll
-        #old:
-        # mean = torch.reshape(self.mean, (64, 1, 32**2))
-        # var = torch.reshape(self.var, (64, 1, 32**2))
-        # sample = torch.reshape(sample, (64, 1, 32**2))
-        # val = torch.nn.functional.gaussian_nll_loss(input = mean, target = sample, var = var, full = True)
-        # print(val)
-        # return val
+    # old:
+    # batch_size x channel x image_dim (64 x 1 x 32^2)
+    # var = torch.flatten(self.var, start_dim = 2)
+    # var = torch.pow(var, -1)
+    # mean = torch.flatten(self.mean, start_dim = 2)
+    # sample = torch.flatten(sample, start_dim = 2)
+    # # log_det = torch.log(torch.prod(var, dim = 2))
+    # log_det = torch.sum(torch.log(var), dim = 2)
+    # diff = sample-mean
+    # prod = torch.bmm(diff*var, torch.transpose(diff, 1, 2))
+    # const = mean.shape[2] * log(2*pi)
+    # # print(log_det)
+    # return -0.5 * (log_det + prod + const)
 
+    # old:
+    # prod_1 = (var_inv @ (sample - mean))
+    # diff = sample-self.mean
+    # prod = (sample - self.mean) @ prod_1 #BUG: mauvaise dim
+    # negative_ll = 0.5 * (log_det + prod + const)
+    # return negative_ll
+    # old:
+    # mean = torch.reshape(self.mean, (64, 1, 32**2))
+    # var = torch.reshape(self.var, (64, 1, 32**2))
+    # sample = torch.reshape(sample, (64, 1, 32**2))
+    # val = torch.nn.functional.gaussian_nll_loss(input = mean, target = sample, var = var, full = True)
+    # print(val)
+    # return val
 
+    # old:
+    # dim = self.mean.shape
+    # cov = torch.diag(self.var)
+    # inside = -0.5 * (sample - self.mean).T @ torch.inversecov @ (sample - self.mean)
+    # sample_proba = (
+    #     (2 * pi) ** (-dim / 2) @ sqrt(torch.det(cov)) @ torch.exp(inside)
+    # )  # TODO: changer puissance carrée -dim/2
 
-        # old:
-        # dim = self.mean.shape
-        # cov = torch.diag(self.var)
-        # inside = -0.5 * (sample - self.mean).T @ torch.inversecov @ (sample - self.mean)
-        # sample_proba = (
-        #     (2 * pi) ** (-dim / 2) @ sqrt(torch.det(cov)) @ torch.exp(inside)
-        # )  # TODO: changer puissance carrée -dim/2
-
-        # return negative_ll
+    # return negative_ll
 
     def mode(self):
         # Returns the mode of the distribution
@@ -251,9 +284,8 @@ class VAE(nn.Module):
         return self.decode(z).mode()
         # WRITE CODE HERE
 
-
     def log_likelihood(self, x, K=100):  # HACK: this might not work att all
-        #BUG: If there is a bug, it's most likely in here
+        # BUG: If there is a bug, it's most likely in here
         # Approximate the log-likelihood of the data using Importance Sampling
         # Inputs:
         #   x: Data sample tensor of shape (batch_size, 3, 32, 32)
@@ -263,7 +295,6 @@ class VAE(nn.Module):
         #       Size: (batch_size,)
         posterior = self.encode(x)
         prior = DiagonalGaussianDistribution(torch.zeros_like(posterior.mean))
-
         log_likelihood = torch.zeros(x.shape[0], K).to(self.device)
 
         for i in range(K):
@@ -271,9 +302,16 @@ class VAE(nn.Module):
             recon = self.decode(
                 z
             )  # WRITE CODE HERE (decode to conditional distribution)
-
+            print("prio not ok")
+            shape = list(range(len(z.shape)))[:-1]
+            prio = -prior.nll(z, dims = shape)
+            print("prio ok")
+            posterio = posterior.nll(z, dims = shape)
+            print("posterio ok")
+            recon = -recon.nll(x, dims = shape)
+            print("recon ok")
             log_likelihood[:, i] = (
-                -prior.nll(z) + posterior.nll(z) - recon.nll(x)
+                prio + posterio + recon
             )  # WRITE CODE HERE (log of the summation
             # terms in approximate log-likelihood, that is, log p_\theta(x, z_i) -
             # log q_\phi(z_i | x))
@@ -295,11 +333,25 @@ class VAE(nn.Module):
         #                                         Size: (batch_size,)
         #   KL: The KL Divergence between the variational approximate posterior with N(0, I)
         #       Size: (batch_size,)
-        posterior = self.encode(x)  # WRITE CODE HERE
-        latent_z = posterior.sample(noise)  # WRITE CODE HERE (sample a z)
-        recon = self.decode(latent_z)  # WRITE CODE HERE (decode)
+        post = self.encode(x)
+        print("post ok")
+        z = post.sample(noise)
+        print("z ok")
+        recon = self.decode(z)
+        print("recon ok")
+        mode = recon.mode()
+        print("mode ok")
+        nll = -self.log_likelihood(x)
+        print("log likelihood ok")
+        kl = post.kl()
+        print("KL ok")
+        return mode, nll, kl
 
-        return recon.mode(), recon.nll(x), posterior.kl()
+        # old:
+        # posterior = self.encode(x)  # WRITE CODE HERE
+        # latent_z = posterior.sample(noise)  # WRITE CODE HERE (sample a z)
+        # recon = self.decode(latent_z)  # WRITE CODE HERE (decode)
+        # return recon.mode(), self.log_likelihood(x), posterior.kl()
 
 
 def interpolate(model, z_1, z_2, n_samples):
