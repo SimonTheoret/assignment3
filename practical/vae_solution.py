@@ -355,17 +355,11 @@ class VAE(nn.Module):
         #   KL: The KL Divergence between the variational approximate posterior with N(0, I)
         #       Size: (batch_size,)
         post = self.encode(x)
-        print("post ok")
         z = post.sample(noise)
-        print("z ok")
         recon = self.decode(z)
-        print("recon ok")
         mode = recon.mode()
-        print("mode ok")
         nll = -self.log_likelihood(x)
-        print("log likelihood ok")
         kl = post.kl()
-        print("KL ok")
         print(f"mode: { mode }, nll: {nll}, kl: {kl}")
         return mode, nll, kl
 
