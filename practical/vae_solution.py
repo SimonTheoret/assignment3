@@ -135,21 +135,26 @@ class DiagonalGaussianDistribution(object):
         # Return: Tensor of size (batch size,) containing the log-likelihood for each element in the batch
         # from the wiki article: https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Likelihood_function
         # shape var == shape sample = shape mean
-        start = 1
         # print(sample.shape)
-        var = torch.flatten(self.var, start_dim=start) #3x16^2 = 3 x 256
+        var = torch.flatten(self.var, 1) #3x16^2 = 3 x 256
+        new_var = torch.zeros((var.shape[0], var.shape[1], var.shape[1]))
+        for i in range(var.shape[0]): #for i in batch
+            new_var[i,:] = torch.diag(var[i,:])
+        log_det = torch.logdet(new_var)
         mean = torch.unsqueeze(torch.flatten(self.mean, 1), 1)
         samples = torch.unsqueeze(torch.flatten(sample,1), 1)
-        log_det = torch.log(torch.prod(var, dim=1))
+        # log_det = torch.log(torch.prod(var, dim=1))
         # print("log_det shape:", log_det.shape)
 
         diff = (samples - mean)
-        var = torch.unsqueeze(var, 1)
-        exp = torch.squeeze(torch.bmm(diff * var.pow_(-1), torch.transpose(diff, 1, 2)))
+        # var = torch.unsqueeze(var, 1)
+        exp = torch.squeeze(torch.bmm(torch.bmm(diff,torch.inverse(new_var)), torch.transpose(diff, 1, 2)))
         # print("exp shape:", exp.shape)
         # exp = torch.reshape(exp, (sample.shape[0]))
         const = log(2 * pi) * samples.shape[-1]
         res = 0.5 * torch.squeeze(const + log_det + exp)
+        # print(const)
+        # print(samples.shape[-1])
         # print("res shape:", res.shape)
         return res
         # var = self.var
@@ -284,7 +289,7 @@ class VAE(nn.Module):
 
         # WRITE CODE HERE
         z = self.decoder(z)
-        id = torch.ones_like(z)
+        id = torch.zeros_like(z)
         return DiagonalGaussianDistribution(mean=z, logvar=id)
 
     def sample(self, batch_size, noise=None):
@@ -320,7 +325,7 @@ class VAE(nn.Module):
                 z
             )  # WRITE CODE HERE (decode to conditional distribution)
             # print("prio not ok")
-            prio = -prior.nll(z, )
+            prio = -prior.nll(z)
             # print("prio ok")
             posterio = posterior.nll(z)
             # print("posterio ok")
@@ -330,7 +335,7 @@ class VAE(nn.Module):
             # print(prio.shape)
             # print(posterio.shape)
             # print(recon.shape)
-            log_likelihood[:, i] = 1 / K *(
+            log_likelihood[:, i] = (
                 prio + posterio + recon
             )  # WRITE CODE HERE (log of the summation
             # terms in approximate log-likelihood, that is, log p_\theta(x, z_i) -
@@ -340,7 +345,7 @@ class VAE(nn.Module):
 
         ll = (
              torch.logsumexp(log_likelihood, dim=-1)
-        )  # WRITE CODE HERE (compute the final log-likelihood using the log-sum-exp trick)
+        ) - log(K)  # WRITE CODE HERE (compute the final log-likelihood using the log-sum-exp trick)
         return ll
 
 
@@ -354,20 +359,20 @@ class VAE(nn.Module):
         #                                         Size: (batch_size,)
         #   KL: The KL Divergence between the variational approximate posterior with N(0, I)
         #       Size: (batch_size,)
-        post = self.encode(x)
-        z = post.sample(noise)
-        recon = self.decode(z)
-        mode = recon.mode()
-        nll = -self.log_likelihood(x)
-        kl = post.kl()
-        print(f"mode: { mode }, nll: {nll}, kl: {kl}")
-        return mode, nll, kl
+        # post = self.encode(x)
+        # z = post.sample(noise)
+        # recon = self.decode(z)
+        # mode = recon.mode()
+        # nll = recon.nll(x)
+        # kl = post.kl()
+        # print(f"mode: { mode }, nll: {nll}, kl: {kl}")
+        # return mode, nll, kl
 
         # old:
-        # posterior = self.encode(x)  # WRITE CODE HERE
-        # latent_z = posterior.sample(noise)  # WRITE CODE HERE (sample a z)
-        # recon = self.decode(latent_z)  # WRITE CODE HERE (decode)
-        # return recon.mode(), self.log_likelihood(x), posterior.kl()
+        posterior = self.encode(x)  # WRITE CODE HERE
+        latent_z = posterior.sample(noise)  # WRITE CODE HERE (sample a z)
+        recon = self.decode(latent_z)  # WRITE CODE HERE (decode)
+        return recon.mode(), recon.nll(x), posterior.kl()
 
 
 def interpolate(model, z_1, z_2, n_samples):

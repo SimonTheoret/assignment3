@@ -168,10 +168,5 @@ def interpolate(generator, z_1, z_2, n_samples):
     lengths = torch.linspace(0.0, 1.0, n_samples).to(z_1.device) # (n_samples)
     for i in range(n_samples):
         inter[i] = z_1*lengths[i]  + (1-lengths[i])*z_2
-    # z = (
-    #     z_1 * lengths + (1 - lengths) * z_2
-    # )  # WRITE CODE HERE (interpolate z_1 to z_2 with n_samples points)
-    # z = torch.tranpose(z, 2,)
-    # print(z.shape)
     out = generator(inter)
     return out
