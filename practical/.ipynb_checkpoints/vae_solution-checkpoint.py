@@ -100,30 +100,18 @@ class DiagonalGaussianDistribution(object):
         # Compute the KL-Divergence between the distribution with the standard normal N(0, I)
         # Return: Tensor of size (batch size,) containing the KL-Divergence for each element in the batch
         # from the wiki article: https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Kullback%E2%80%93Leibler_divergence
+
         kl_div = None  # WRITE CODE HERE
         device = "cuda" if torch.cuda.is_available() else "cpu"
         # var_inv = torch.pow(self.var, -1)
-        mean = torch.flatten(self.mean, 1)
-        var = torch.flatten(self.var, 1)
-
-        sigma = torch.zeros((var.shape[0], var.shape[1], var.shape[1]), device=device)
-        for i in range(var.shape[0]):  # for i in batch
-            sigma[i, :] = torch.diag(var[i, :])
-        trace = torch.vmap(torch.trace)(sigma)
-        double_mu = torch.vmap(torch.dot)(mean, mean)
-        k = mean.shape[1]
-        log_det = torch.logdet(sigma)
-        return 0.5 * (trace + double_mu - k - log_det)
-        #
-        #
-        # dim = mean.shape[1]  # dimensions of a single example
-        # trace = torch.sum(self.var)
-        # prod = torch.matmul(
-        #     self.mean, torch.eye(dim).to(device) @ torch.transpose(self.mean, -1, -2)
-        # ).squeeze()
-        # log_det = torch.log(torch.prod(self.var))
-        # kl_div = 0.5 * (trace + prod - dim - log_det)
-        # return -kl_div
+        dim = self.mean.shape[1]  # dimensions of a single example
+        trace = torch.sum(self.var)
+        prod = torch.matmul(
+            self.mean, torch.eye(dim).to(device) @ torch.transpose(self.mean, -1, -2)
+        ).squeeze()
+        log_det = torch.log(torch.prod(self.var))
+        kl_div = 0.5 * (trace + prod - dim - log_det)
+        return kl_div
 
         # old:
         # cov = torch.flatten(self.var.pow_(-1))
@@ -147,59 +135,30 @@ class DiagonalGaussianDistribution(object):
         # Return: Tensor of size (batch size,) containing the log-likelihood for each element in the batch
         # from the wiki article: https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Likelihood_function
         # shape var == shape sample = shape mean
-        # print(sample.shape)
-        #
-
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        var = torch.flatten(self.var, 1)  # 3x16^2 = 3 x 256
-        new_var = torch.zeros((var.shape[0], var.shape[1], var.shape[1]), device=device)
-        for i in range(var.shape[0]):  # for i in batch
-            new_var[i, :] = torch.diag(var[i, :])
-        log_det = torch.logdet(new_var)
-        mean = torch.unsqueeze(torch.flatten(self.mean, 1), 1)
-        samples = torch.unsqueeze(torch.flatten(sample, 1), 1)
-        # log_det = torch.log(torch.prod(var, dim=1))
-        # print("log_det shape:", log_det.shape)
-
-        diff = samples - mean
-        # var = torch.unsqueeze(var, 1)
-        exp = torch.squeeze(
-            torch.bmm(
-                torch.bmm(diff, torch.inverse(new_var)), torch.transpose(diff, 1, 2)
-            )
-        )
-        # print("exp shape:", exp.shape)
-        # exp = torch.reshape(exp, (sample.shape[0]))
-        const = log(2 * pi) * samples.shape[-1]
-        res = 0.5 * torch.squeeze(const + log_det + exp)
-        # print(const)
-        # print(samples.shape[-1])
-        # print("res shape:", res.shape)
-        return res
-        # var = self.var
-        # var_inv = torch.pow(var, -1)
-        # diff = sample - self.mean
-        # print(dims)
-        # det = torch.prod(var,dim = dims[-1])
-        # print("passe 1")
-        # for dim in dims[:-1]:
-        #     det *= torch.prod(var, dim = dim)
-        # print("passe 2")
-        # log_det = torch.log(det)
-        # print("passe 3")
-        # elem = (diff * var_inv)
-        # print(elem.shape)
-        # print(diff.shape)
-        # shape_pos =  len(diff.shape)-1
-        # dist = torch.matmul(elem , torch.transpose(diff, shape_pos-2, shape_pos-1 )) if len(dims)>=2 else torch.matmul(elem, diff.T)
-        # const = log(2 * pi)
-        # for i in range(1, len(sample.shape)):
-        #     const*= sample.shape[i]
-        # print("passe 4")
-        # print(log_det.shape)
-        # print(dist.shape)
-        # negative_ll = 0.5 * torch.sum(log_det + dist + const, dim=dims)
-        # return negative_ll
+        var = self.var
+        var_inv = torch.pow(var, -1)
+        diff = sample - self.mean
+        print(dims)
+        det = torch.prod(var,dim = dims[-1])
+        print("passe 1")
+        for dim in dims[:-1]:
+            det *= torch.prod(var, dim = dim)
+        print("passe 2")
+        log_det = torch.log(det)
+        print("passe 3")
+        elem = (diff * var_inv)
+        print(elem.shape)
+        print(diff.shape)
+        shape_pos =  len(diff.shape)-1
+        dist = torch.matmul(elem , torch.transpose(diff, shape_pos-2, shape_pos-1 )) if len(dims)>=2 else torch.matmul(elem, diff.T)
+        const = log(2 * pi)
+        for i in range(1, len(sample.shape)):
+            const*= sample.shape[i]
+        print("passe 4")
+        print(log_det.shape)
+        print(dist.shape)
+        negative_ll = 0.5 * torch.sum(log_det + dist + const, dim=dims)
+        return negative_ll
 
     # negative_ll = None  # WRITE CODE HERE
     # log_det = torch.log(torch.det(self.var))
@@ -308,7 +267,7 @@ class VAE(nn.Module):
 
         # WRITE CODE HERE
         z = self.decoder(z)
-        id = torch.zeros_like(z)
+        id = torch.ones_like(z)
         return DiagonalGaussianDistribution(mean=z, logvar=id)
 
     def sample(self, batch_size, noise=None):
@@ -319,8 +278,10 @@ class VAE(nn.Module):
         #            Size: (batch_size, 3, 32, 32)
         # WRITE CODE HERE
         if noise == None:
-            noise = torch.rand(batch_size, self.z_dim, device = self.device)
-        return self.decode(noise).mode()
+            z = torch.randn(batch_size, 3, 32, 32).to(self.device)
+        else:
+            z = noise
+        return self.decode(z).mode()
         # WRITE CODE HERE
 
     def log_likelihood(self, x, K=100):  # HACK: this might not work att all
@@ -341,27 +302,24 @@ class VAE(nn.Module):
             recon = self.decode(
                 z
             )  # WRITE CODE HERE (decode to conditional distribution)
-            # print("prio not ok")
-            prio = -prior.nll(z)
-            # print("prio ok")
-            posterio = posterior.nll(z)
-            # print("posterio ok")
-            recon = -recon.nll(x)
-            # print("recon ok")
-            # print(x.shape)
-            # print(prio.shape)
-            # print(posterio.shape)
-            # print(recon.shape)
+            print("prio not ok")
+            shape = list(range(len(z.shape)))[:-1]
+            prio = -prior.nll(z, dims = shape)
+            print("prio ok")
+            posterio = posterior.nll(z, dims = shape)
+            print("posterio ok")
+            recon = -recon.nll(x, dims = shape)
+            print("recon ok")
             log_likelihood[:, i] = (
                 prio + posterio + recon
             )  # WRITE CODE HERE (log of the summation
             # terms in approximate log-likelihood, that is, log p_\theta(x, z_i) -
             # log q_\phi(z_i | x))
-            # print("sum ok")
+
             del z, recon
 
-        ll = (torch.logsumexp(log_likelihood, dim=-1)) - log(
-            K
+        ll = (
+            1 / K * torch.logsumexp(log_likelihood, dim=-1)
         )  # WRITE CODE HERE (compute the final log-likelihood using the log-sum-exp trick)
         return ll
 
@@ -375,20 +333,25 @@ class VAE(nn.Module):
         #                                         Size: (batch_size,)
         #   KL: The KL Divergence between the variational approximate posterior with N(0, I)
         #       Size: (batch_size,)
-        # post = self.encode(x)
-        # z = post.sample(noise)
-        # recon = self.decode(z)
-        # mode = recon.mode()
-        # nll = recon.nll(x)
-        # kl = post.kl()
-        # print(f"mode: { mode }, nll: {nll}, kl: {kl}")
-        # return mode, nll, kl
+        post = self.encode(x)
+        print("post ok")
+        z = post.sample(noise)
+        print("z ok")
+        recon = self.decode(z)
+        print("recon ok")
+        mode = recon.mode()
+        print("mode ok")
+        nll = -self.log_likelihood(x)
+        print("log likelihood ok")
+        kl = post.kl()
+        print("KL ok")
+        return mode, nll, kl
 
         # old:
-        posterior = self.encode(x)  # WRITE CODE HERE
-        latent_z = posterior.sample(noise)  # WRITE CODE HERE (sample a z)
-        recon = self.decode(latent_z)  # WRITE CODE HERE (decode)
-        return recon.mode(), recon.nll(x), posterior.kl()
+        # posterior = self.encode(x)  # WRITE CODE HERE
+        # latent_z = posterior.sample(noise)  # WRITE CODE HERE (sample a z)
+        # recon = self.decode(latent_z)  # WRITE CODE HERE (decode)
+        # return recon.mode(), self.log_likelihood(x), posterior.kl()
 
 
 def interpolate(model, z_1, z_2, n_samples):

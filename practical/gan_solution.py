@@ -1,16 +1,6 @@
 import torch
 import torch.nn as nn
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-# Training Hyperparameters
-batch_size = 64  # Batch Size
-z_dim = 32  # Latent Dimensionality
-gen_lr = 1e-4  # Learning Rate for the Generator
-disc_lr = 1e-4  # Learning Rate for the Discriminator/
-# Define Dataset Statistics
-image_size = 32
-input_channels = 1
-
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -78,8 +68,15 @@ class Discriminator(nn.Module):
         return self.model(input)
 
 
-generator = Generator(z_dim, input_channels).to(device)
-discriminator = Discriminator(input_channels).to(device)
+z_dim = 32
+input_channels = 3
+generator = Generator(z_dim, input_channels)
+discriminator = Discriminator(input_channels)
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+gen_lr = 1e-4  # Learning Rate for the Generator
+disc_lr = 1e-4  # Learning Rate for the Discriminator/
 
 discriminator_optimizer = torch.optim.Adam(
     discriminator.parameters(), lr=disc_lr, betas=(0.5, 0.999)
@@ -88,7 +85,7 @@ generator_optimizer = torch.optim.Adam(
     generator.parameters(), lr=gen_lr, betas=(0.5, 0.999)
 )  # WRITE CODE HERE
 
-criterion = torch.nn.BCEWithLogitsLoss()  # WRITE CODE HERE
+criterion = torch.nn.BCEWithLogitsLoss(reduction="sum")  # WRITE CODE HERE
 
 
 def discriminator_train(discriminator, generator, real_samples, fake_samples):
@@ -99,6 +96,16 @@ def discriminator_train(discriminator, generator, real_samples, fake_samples):
     # Returns:
     #   loss: Discriminator loss
 
+    # ones = None   # WRITE CODE HERE (targets for real data)
+    # zeros = None  # WRITE CODE HERE (targets for fake data)
+
+    # real_output = None    # WRITE CODE HERE (output of discriminator on real data)
+    # fake_output = None    # WRITE CODE HERE (output of discriminator on fake data)
+
+    # loss = None           # WRITE CODE HERE (define the loss based on criterion and above variables)
+
+    # return loss
+
     real_output = discriminator(
         real_samples
     )  # WRITE CODE HERE (output of discriminator on real data)
@@ -107,7 +114,7 @@ def discriminator_train(discriminator, generator, real_samples, fake_samples):
     )  # WRITE CODE HERE (output of discriminator on fake data)
 
     ones = torch.ones_like(real_output)  # WRITE CODE HERE (targets for real data)
-    zeros = 1 - torch.ones_like(fake_output)  # WRITE CODE HERE (targets for fake data)
+    zeros = torch.zeros_like(fake_output)  # WRITE CODE HERE (targets for fake data)
 
     loss = criterion(real_output, ones) + criterion(
         fake_output, zeros
@@ -147,7 +154,11 @@ def sample(generator, num_samples, noise=None):
 
     with torch.no_grad():
         # WRITE CODE HERE (sample from p_z and then generate samples from it)
-        pixel_space = torch.randn(num_samples, z_dim, 1, 1, device = device) if noise ==None else noise
+        pixel_space = (
+            torch.randn(num_samples, z_dim, 1, 1, device=device)
+            if noise == None
+            else noise
+        )
         generated = generator(pixel_space)
         return generated
 
@@ -164,9 +175,9 @@ def interpolate(generator, z_1, z_2, n_samples):
 
     # WRITE CODE HERE (interpolate z_1 to z_2 with n_samples points and then)
     # WRITE CODE HERE (    generate samples from the respective latents     )
-    inter = torch.zeros((n_samples, *z_1.shape))
-    lengths = torch.linspace(0.0, 1.0, n_samples).to(z_1.device) # (n_samples)
+    inter = torch.zeros((n_samples, *z_1.shape)).to(z_1.device)
+    lengths = torch.linspace(0.0, 1.0, n_samples).to(z_1.device)  # (n_samples)
     for i in range(n_samples):
-        inter[i] = z_1*lengths[i]  + (1-lengths[i])*z_2
+        inter[i] = z_1 * lengths[i] + (1 - lengths[i]) * z_2
     out = generator(inter)
     return out
