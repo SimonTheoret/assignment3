@@ -212,5 +212,5 @@ def t_sample(timesteps, batch_size, device):
     # Returns:
     #   ts: Tensor of size (batch_size,) containing timesteps randomly sampled from 0 to timesteps-1
 
-    ts = None  # WRITE CODE HERE: Randommly sample a tensor of size (batch_size,) where entries are independently sampled from [0, ..., timesteps-1]()
+    ts = torch.randint(low = 0, high = timesteps, size = (batch_size,)).to(device)  # WRITE CODE HERE: Randommly sample a tensor of size (batch_size,) where entries are independently sampled from [0, ..., timesteps-1]()
     return ts
