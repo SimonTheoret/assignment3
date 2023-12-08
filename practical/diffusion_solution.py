@@ -17,7 +17,7 @@ def extract(a, t, x_shape):
     #   out: Tensor of shape (batch_size, 1, 1, 1) generally, the number of 1s are
     #         determined by the number of dimensions in x_shape.
     #         out[i] contains a[t[i]]
-
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     batch_size = t.shape[0]
     out = a.gather(-1, t.cpu())
     return out.reshape(batch_size, *((1,) * (len(x_shape) - 1))).to(t.device)
@@ -44,13 +44,13 @@ def alphas_betas_sequences_helper(beta_start, beta_end, T):
         1 - alphas_cumprod
     )  # WRITE CODE HERE: Returns square_root(1 - \bar{\alpha}_t)
     alphas_cumprod_prev = F.pad(
-        alphas_cumprod, (1, 0), value=1.0
+        alphas_cumprod[:-1], (1, 0), value=1.0
     )  # WRITE CODE HERE: Right shifts \bar{\alpha}_t; with first element as 1.
     #
     # torch.cat((torch.tensor([1]), alphas_cumprod),0)
 
     posterior_variance = (
-        (1 - alphas_cumprod_prev[:-1]) / (1 - alphas_cumprod) * betas
+        (1 - alphas_cumprod_prev) / (1 - alphas_cumprod) * betas
     )  # WRITE CODE HERE: Contains the posterior variances $\tilde{\beta}_t$
 
     return (
@@ -79,6 +79,7 @@ def q_sample(x_start, t, coefficients, noise=None):
     #   x_noisy: Tensor of noisy images of size (batch_size, 3, 32, 32)
     #             x_noisy[i] is sampled from q(x_{t[i]} | x_start[i])
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     if noise is None:
         noise = torch.randn_like(x_start)
 
@@ -106,6 +107,8 @@ def p_sample(model, x, t, t_index, coefficients, noise=None):
     #   coefficients: 4-tuple
     # Returns:
     #   sample: A sample from the distribution p_\theta(x_{t-1} | x_t); mode if t=0
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
     with torch.no_grad():
         betas_t = extract(
             coefficients[0], t, x.shape
@@ -151,7 +154,7 @@ def p_sample_loop(model, shape, timesteps, T, coefficients, noise=None):
     with torch.no_grad():
         b = shape[0]
         # Start from pure noise (x_T)
-        img = torch.randn(shape, device=model.device) if noise is None else noise[0]
+        img = torch.randn(shape, device=device) if noise is None else noise[0]
         imgs = []
 
         for i in tqdm(
@@ -188,6 +191,9 @@ def p_losses(denoise_model, x_start, t, coefficients, noise=None):
     #   t: Timesteps (can be different at different indices); size (batch_size,)
     # Returns:
     #   loss: Loss for training the model
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
     noise = torch.randn_like(x_start) if noise is None else noise
 
     x_noisy = q_sample(
@@ -211,6 +217,8 @@ def t_sample(timesteps, batch_size, device):
     #   batch_size: batch_size used in training
     # Returns:
     #   ts: Tensor of size (batch_size,) containing timesteps randomly sampled from 0 to timesteps-1
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     ts = torch.randint(low = 0, high = timesteps, size = (batch_size,)).to(device)  # WRITE CODE HERE: Randommly sample a tensor of size (batch_size,) where entries are independently sampled from [0, ..., timesteps-1]()
     return ts

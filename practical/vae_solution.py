@@ -295,7 +295,7 @@ class VAE(nn.Module):
         #   posterior: The posterior distribution q_\phi(z | x)
         #
         # WRITE CODE HERE
-        x = self.encoder(x)
+        x = self.encoder(x).view(x.shape[0], -1)
         mean = self.mean(x)
         logvar = self.logvar(x)
         return DiagonalGaussianDistribution(mean=mean, logvar=logvar)
