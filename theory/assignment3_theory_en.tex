@@ -19,6 +19,7 @@
 \usepackage{tikz}
 \usepackage{graphicx}
 \usepackage{float}
+\usepackage{monpackage}
 
 \setlength{\parindent}{0cm}
 \addtolength{\oddsidemargin}{-2cm}
@@ -379,16 +380,16 @@ By applying the change of variable $x = F(u)$, we obtain the following density f
 \begin{tabular}{ll}
 Distribution & Density  \\
  $P_X $ & $p(x)$ \\
- $P_{F^{-1}(X)}$&  $p(F(u))\vert \text{det}_{J_{f}} \vert $ \\
+ $P_{F^{-1}(X)}$&  $p(F(u))\vert \text{det}\,{J_{f}} \vert $ \\
  $P_U $& $q(u)$ \\
- $P_{F(U)} $& $q(F^{-1}(x)) \vert \text{det}_{J_{F^{-1}}}  \vert$
+ $P_{F(U)} $& $q(F^{-1}(x)) \vert \text{det}\,{J_{F^{-1}}}  \vert$
 \end{tabular}%
 \end{table}
 Let's compute the KL divergences:
 \begin{align*}
   D_{KL} (P_{X}|| P_{F(u)}) &= \int_{X} p(x) (\log p(x) - \log q(F^{-1}(x)) - \log |\text{det} J_{F^{-1}}|) dx \\
 \end{align*} We apply the change of variable $x = F(u)$,
-$dx = | \text{det} J_{F}| du$ and noting that
+$dx = | \text{det} J_{F}| du$ and note that
 $|\text{det} J_{F}|= | \text{det} J_{F^{-1}} |^{-1}$. We can rewrite our
 equation as follows:
 \begin{align*}
@@ -452,6 +453,59 @@ D_{KL} (P_{X}|| P_{F(u)}) &= \int_{U} p(F(u))|\text{det}  J_{F}| (\log p(F(u)) -
 
 \Answer{
 
+  \subsubsection*{3.1}
+  The answer is b): It is difficul to calculate the marginal likelihood due to the complexity of
+  $p(x | z)$ and the curse of dimensionality.
+  \subsubsection*{3.2}
+
+  \paragraph{i}
+  Let's calculate the ELBO as a combination of KL-divergence and the marginal likelihood:
+    \begin{align*}
+      \log p(x)  &= \log p(x) + \int_{Z} q(z | x) \log \frac{p(x,z)}{q(z|x)}dz - \int_{Z} q(z | x) \log \frac{p(x,z)}{q(z|x)}dz\\
+      &=  \int_{Z} q(z|x) \log p(x) dz + \int_{Z} q(z | x) \log \frac{p(x,z)}{q(z|x)}dz - \int q(z | x) \log \frac{p(x,z)}{q(z|x)}dz\\
+      &= \int_{Z} q(z | x) \log \frac{p(x,z)}{q(z|x)}dz - \int q(z | x) \pr{\log \frac{p(x,z)}{q(z|x)}-\log p(x)}dz\\
+      &= \int_{Z} q(z | x) \log \frac{p(x,z)}{q(z|x)}dz - \int q(z | x) \pr{\log \frac{p(x,z)}{q(z|x) p(x)}}dz\\
+      &= \int_{Z} q(z | x) \log \frac{p(x,z)}{q(z|x)}dz - \int q(z | x) \pr{\log \frac{p(z|x) p(x)}{q(z|x) p( x )}}dz\\
+      &= \int_{Z} q(z | x) \log \frac{p(x,z)}{q(z|x)}dz - \int q(z | x) \pr{\log \frac{p(z|x) }{q(z|x)}}dz\\
+      &= \mathcal{L}(p,q)  + KL(q_{z|x}|| p_{z|x})
+    \end{align*}
+    Therefore, we see that the marginal likelihood is a combination of the
+    ELBO, denoted by $\mathcal(p,q)$, and a KL-divergence.
+  \paragraph{ii}
+  The ELBO can be derived with the jensen inequality:
+  \begin{align*}
+    \log p(x) &= \log \int_{Z} p(x,z) dz\\
+    &= \log \int_{Z} p(x,z) \frac{q(z|x)}{q(z|x)} dz\\
+    &= \log \ES_{q(z|x)}{\ct{\frac{p(x,z)}{q(z|x)}}} \\
+    & \geq \ES_{q(z|x)}{\ct{\log \frac{p(x,z)}{q(z|x)}}} \quad  \text{concavity of $\log$} \\
+    &= ELBO(q,p),
+  \end{align*}
+  which is what we were looking for.
+  \subsubsection*{3.3}
+  The above result is significant because of a, b and d.
+  \subsubsection*{3.4}
+  \paragraph{a}
+  We will show that IWLB is a lower bound on the log likelihood $\log p(x)$.
+  \begin{align*}
+    \mathcal{L}_{k} &= \ES{\ct{\log 1/k \sum_{j =  1}^{k} \frac{p(x, z_{j})}{q(z_{j}|x)}}}\\
+        & \leq  \log \ES{\ct{ 1/k \sum_{j =  1}^{k} \frac{p(x, z_{j})}{q(z_{j}|x)}}} \quad \text{Jensen
+          inequality for concave fonction}\\
+        & = \log 1/k \sum_{j = 1}^{K} \int_{Z} q(z_{j}|x) \frac{p(x, z_{j})}{q(z_{j}|x)} dz\\
+        & = \log \int_{Z} p(x,z_{j}) dz \\
+        & = \log p(x),
+  \end{align*}
+  which is what we wanted to show.
+  \paragraph{b}
+  We have to show that $\mathcal{L}_{1} = ELBO \leq \mathcal{L}_{2}$. First, note how
+  $\ES_{i\sim \mathcal{B}(\frac{1}{2})}{\ct{\frac{p(x,z_{i})}{q(z_{i}|x)}}} = 1/2 \pr{\frac{p(x,z_{1})}{q(z_{1}|x)}+ \frac{p(x,z_{2})}{q(z_{2}|x)}}$,
+  where $i \sim \mathcal{B}(\frac{1}{2})$ denotes how the value of $i$ follows a Bernouilli
+  distribution with probability $\frac{1}{2}$. Then,
+  \begin{align*}
+    \mathcal{L}_{2} &= \ES{\ct{\log 0.5 \pr{\frac{p(x, z_{1})}{q(z_{1}|x)} + \frac{p(x, z_{2})}{q(z_{2}|x)}}}}\\
+                    &= \ES{\ct{\log 0.5 \ES\,{\ct{\frac{p(x, z)}{q(z|x)}}}}}\\
+                    &\geq \ES{\ct{ 0.5 \ES\,{\ct{\log \frac{p(x, z)}{q(z|x)}}}}}\\
+                    &= 0.5 \ES{\ct{\log \frac{p(x,z)}{q(z|x)}}}
+  \end{align*}
 
 
 }

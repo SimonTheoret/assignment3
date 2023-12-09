@@ -1,0 +1,123 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{monpackage}[2020-04-03 cumulatif de packages mathématiques]
+
+\RequirePackage{mathtools}
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{babel}
+\RequirePackage{ragged2e}
+\RequirePackage{enumerate}
+\RequirePackage{bbm}
+\RequirePackage{amsthm}
+\RequirePackage{amsfonts}
+\RequirePackage{amscd}
+\RequirePackage{hyperref}
+\RequirePackage{lipsum}
+\RequirePackage{array}
+\RequirePackage{graphicx}
+\RequirePackage[margin=1.25in]{geometry}
+\RequirePackage[T1]{fontenc}
+\RequirePackage[utf8]{inputenc}
+
+
+    % Environnements
+    \newtheorem{theoreme}{Théorème}
+    \newtheorem*{theoreme*}{Théorème}
+    \newtheorem{proposition}{Proposition}
+    \newtheorem*{proposition*}{Proposition}
+    \newtheorem{lemme}{Lemme}[section]
+    \newtheorem*{lemme*}{Lemme}
+    \newtheorem{corollaire}{Corollaire}
+    \newtheorem*{corollaire*}{Corollaire}
+    \newtheorem{conjecture}{Conjecture}
+    \newtheorem*{conjecture*}{Conjecture}
+
+    \theoremstyle{definition}
+    \newtheorem{definition}{Définition}
+    \newtheorem*{definition*}{Définition}
+    \newtheorem{notation}{Notation}
+    \newtheorem*{notation*}{Notation}
+    \newtheorem{exercice}{Exercice}
+    \newtheorem*{exercice*}{Exercice}
+    \newtheorem{probleme}{Problème}
+    \newtheorem*{probleme*}{Problème}
+    \newtheorem{question}{Question}
+    \newtheorem*{question*}{Question}
+    \newtheorem*{solution}{Solution}
+
+    \theoremstyle{remark}
+    \newtheorem{exemple}{Exemple}[section]
+    \newtheorem*{exemple*}{Exemple}
+    \newtheorem{remarque}{Remarque}[section]
+    \newtheorem*{remarque*}{Remarque}
+
+    \numberwithin{equation}{section}
+
+    % Notations textuelles
+    \newcommand{\tq} {\text{ t.q. }}
+    \newcommand{\si} {\text{ si }}
+    \newcommand{\alors}{\text{ alors }}
+    \newcommand{\et}{\text{ et }}
+    \newcommand{\donc}{\text{ donc }}
+
+
+    % Notations -- ensembles
+    % \newcommand{\N} {\mathbb{N}}
+    % \newcommand{\Z} {\mathbb{Z}}
+    % \newcommand{\Q} {\mathbb{Q}}
+    % \newcommand{\R} {\mathbb{R}}
+    \newcommand{\C} {\mathbb{C}}
+    \newcommand{\K} {\mathbb{K}}
+    \newcommand{\enscond}[2]{\ac{#1 : #2}}
+
+    %Notation -- Lettres grecques
+    \newcommand{\eps}{\varepsilon}
+    \newcommand{\delteps}{\delta_\varepsilon}
+
+    % Notation -- probabilités
+    \newcommand{\PR} {\mathbb{P}}
+    \newcommand{\ES} {\mathbb{E}}
+    % \newcommand{\Var} {\mathrm{Var}}
+    % \newcommand{\Cov} {\mathrm{Cov}}
+
+    % Notation -- délimiteurs
+    \newcommand{\ac}[1]{\left\{ #1 \right\}} % accolades
+    \newcommand{\pr}[1]{\left( #1 \right)} % parenthèses
+    \newcommand{\ct}[1]{\left[ #1 \right]} % crochets
+    \newcommand{\norm}[1]{\left\Vert #1 \right\Vert} % norme
+    \newcommand{\floor}[1]{\left\lfloor #1 \right\rfloor} % partie entière
+    \newcommand{\ceil}[1]{\left\lceil #1 \right\rceil} % partie entière + 1
+    \newcommand{\cond}{\ \middle\vert\ }
+    \newcommand{\abs}[1]{\left\vert #1 \right\vert}
+    \newcommand{\card}[1]{\abs{#1}}
+
+    %Notation -- Intégrales, dérivée, limites, sommes, produits
+    \newcommand{\intd}[2]{\int\limits_{#1}^{#2}}
+    \newcommand{\limd}[2]{\lim_{#1 \to #2}}
+    \newcommand{\sumd}[2]{\sum\limits_{#1}^{#2}}
+    \newcommand{\prodd}[2]{\prod\limits_{#1}^{#2}}
+    \newcommand{\pder}[2]{\frac{\partial #1}{\partial #2}}
+    \newcommand{\der}[2]{\frac{d #1}{d #2}}
+    \newcommand{\riemann}[1]{R(#1,P,\bar{\xi})}
+    \newcommand{\riemannsup}[1]{R^{+}(#1,P)}
+    \newcommand{\riemanninf}[1]{R^{-}(#1,P)}
+    \newcommand{\evald}[2]{\big|_{#1}^{#2}}
+
+    % Différence symétrique
+    \newcommand \dsym {\mathop{}\!\mathbin\bigtriangleup\mathop{}\!}
+
+    % Opérateurs
+    \newcommand \1 {\mathbbm 1}
+    \newcommand{\pgcd}[2]{\text{PGCD($#1,#2$)}}
+    \newcommand{\ppcm}[2]{\text{PPCM($#1,#2$)}}
+    \newcommand{\modn}[1]{(\text{mod $#1$})}
+    \newcommand{\znz}[1]{\Z/#1 \Z}
+    \newcommand{\modulo}[3]{#1 \equiv #2 \mod #3} %a modulo b mod n%
+    \newcommand{\dx}[1]{\mathrm{d}#1}
+
+    %Une ligne horizontale
+    \newcommand \lh {
+    	\setlength\parindent{0pt}
+    	\rule{\textwidth}{0.5pt}
+    	\setlength{\parindent}{11pt}
+        }
