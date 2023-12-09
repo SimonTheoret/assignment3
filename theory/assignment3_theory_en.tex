@@ -499,15 +499,14 @@ D_{KL} (P_{X}|| P_{F(u)}) &= \int_{U} p(F(u))|\text{det}  J_{F}| (\log p(F(u)) -
   We have to show that $\mathcal{L}_{1} = ELBO \leq \mathcal{L}_{2}$. First, note how
   $\ES_{i\sim \mathcal{B}(\frac{1}{2})}{\ct{\frac{p(x,z_{i})}{q(z_{i}|x)}}} = 1/2 \pr{\frac{p(x,z_{1})}{q(z_{1}|x)}+ \frac{p(x,z_{2})}{q(z_{2}|x)}}$,
   where $i \sim \mathcal{B}(\frac{1}{2})$ denotes how the value of $i$ follows a Bernouilli
-  distribution with probability $\frac{1}{2}$. Then,
+  distribution with probability $\frac{1}{2}$. Then, %TODO : FSITRE MIEUX
   \begin{align*}
-    \mathcal{L}_{2} &= \ES{\ct{\log 0.5 \pr{\frac{p(x, z_{1})}{q(z_{1}|x)} + \frac{p(x, z_{2})}{q(z_{2}|x)}}}}\\
-                    &= \ES{\ct{\log 0.5 \ES\,{\ct{\frac{p(x, z)}{q(z|x)}}}}}\\
-                    &\geq \ES{\ct{ 0.5 \ES\,{\ct{\log \frac{p(x, z)}{q(z|x)}}}}}\\
-                    &= 0.5 \ES{\ct{\log \frac{p(x,z)}{q(z|x)}}}
+    \mathcal{L}_{2} &= \ES_{z_{1:2} \sim q(z | x)}{\ct{\log 0.5 \pr{\frac{p(x, z_{1})}{q(z_{1}|x)} + \frac{p(x, z_{2})}{q(z_{2}|x)}}}}\\
+                    &= \ES_{z_{1:2} \sim q(z | x)}{\ct{\log  \ES_{i\sim \mathcal{B}(\frac{1}{2})}\,{\ct{\frac{p(x, z_{i})}{q(z_{i}|x)}}}}}\\
+                    &\geq \ES_{z_{1:2} \sim q(z | x)}{\ct{  \ES_{i\sim \mathcal{B}(\frac{1}{2})}\,{\ct{\log \frac{p(x, z_{i})}{q(z_{i}|x)}}}}}\\
+                    &=  \ES_{z \sim q(z | x)}{\ct{\log \frac{p(x,z)}{q(z|x)}}}\\
+                    &= ELBO(p,q)
   \end{align*}
-
-
 }
 \end{exercise}
 
@@ -551,7 +550,39 @@ D_{KL} (P_{X}|| P_{F(u)}) &= \int_{U} p(F(u))|\text{det}  J_{F}| (\log p(F(u)) -
 \end{enumerate}
 
 \Answer{
-  here is some text
+  \subsection*{4.1}
+  The false proposition is c)
+  \subsection*{4.2}
+  The answer is b)
+  \subsection*{4.3}
+  The answe is b)
+  \subsection*{4.4}
+  Non saturating cost, because in the practice the saturating cost function
+  prevent the generator to learn (i.e. we have vanishing gradients).
+  \subsection*{4.5}
+  Because both models are now better at their tasks, i.e. the generator
+  generates better images and the discriminator classifies better the images.
+  Both are can therefore be similar, but both models produce better results.
+  \subsection*{4.6}
+  The optimal discriminator is $D^*(x) = \frac{f_{1}(x)}{f_{1}(x) + f_{0}(x)}$.
+  We can substitute this value in the expression for JSD and reduce the second term like so:
+  % \begin{equation*}
+  %   \ES_{x \sim p_{1}}\ct{\log \frac{f_{1}(x)}{f_{1}(x) + f_{0}(x)}} + \ES_{x \sim p_{0}}\ct{\log \pr{1-\frac{f_{1}(x)}{f_{1}(x) + f_{0}(x)}}}
+  % \end{equation*}
+
+  \begin{align*}
+    KL(p_{0}||\mu) &= \int_{X_{0}} f_{0} \pr{\log \pr{\frac{f_{0}(x)}{f_{0}(x)+f_{1}(x)}} -\log 2 } dP_{0}\\
+                &= \int_{X_{0}} f_{0} \pr{\log \pr{1 - \frac{f_{1}(x)}{f_{0}(x)+f_{1}(x)}} -\log 2 } dP_{0}\\
+                &= - \log 2 + \ES_{x \sim p_{0}}{\ct{\log(1-D(x))}}
+  \end{align*} and the first term:
+  \begin{align*}
+    KL(p_{1}||\mu) &= \int_{X_{1}} f_{1} \pr{\log \pr{\frac{f_{1}(x)}{f_{0}(x)+f_{1}(x)}} -\log 2 } dP_{1}\\
+                &= \int_{X_{1}} f_{1} \pr{\log \pr{\frac{f_{1}(x)}{f_{0}(x)+f_{1}(x)}} -\log 2 } dP_{1}\\
+                &= - \log 2 + \ES_{x \sim p_{1}}{\ct{\log(1-D(x))}}
+  \end{align*} Therefore, the JSD is
+  \begin{equation*}
+      \ES_{x \sim p_{1}}{\ct{\log(1-D^{*}(x))}} + \ES_{x \sim p_{0}}{\ct{\log(1-D^{*}(x))}} - \log 4,
+  \end{equation*} It can be approximated as the result of the GAN training minus $log 4$.
 }
 \end{exercise}
 \begin{exercise}[5-5-5-5] (\textbf{Self-Supervised Learning: Paper Review})
